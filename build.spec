@@ -31,7 +31,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='Configurador_PCs',
+    name='CLA WinConfig',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
