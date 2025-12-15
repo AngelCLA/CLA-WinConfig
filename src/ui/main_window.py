@@ -13,6 +13,9 @@ import time
 from .styles import (configurar_estilos, COLOR_LIGHT, COLOR_TEXT, COLOR_BOLD_BLUE, 
                      COLOR_BLUE, COLOR_CARD_BG, COLOR_CARD_BORDER, COLOR_ACCENT, COLOR_DARK_BLUE)
 
+# Importar módulo de usuarios
+from core import GestorUsuarios
+
 # Detectar BASE_PATH
 if getattr(sys, 'frozen', False):
     BASE_PATH = Path(sys.executable).parent
@@ -267,9 +270,10 @@ class InterfazConfiguradorPC:
         content_area = tk.Frame(main_container, bg=self.COLOR_LIGHT)
         content_area.grid(row=0, column=1, sticky='nsew', padx=(6, 12), pady=12)
         
-        # Configurar grid para el área de contenido (2 filas iguales)
-        content_area.rowconfigure(0, weight=1, uniform='row')
-        content_area.rowconfigure(1, weight=1, uniform='row')
+        # Configurar grid para el área de contenido (3 filas: opciones, usuarios, log)
+        content_area.rowconfigure(0, weight=0, minsize=180)  # Opciones de Configuración
+        content_area.rowconfigure(1, weight=0, minsize=200)  # Gestión de Usuarios
+        content_area.rowconfigure(2, weight=1)               # Registro de Actividad (expandible)
         content_area.columnconfigure(0, weight=1)
         
         # Variables de configuración
@@ -317,9 +321,59 @@ class InterfazConfiguradorPC:
         ttk.Checkbutton(opciones_grid, text="Reiniciar explorador al finalizar", 
                        variable=self.reiniciar_explorer_var).grid(row=2, column=1, sticky='w', pady=6, padx=12)
         
-        # CARD: Registro de Actividad (abajo, más grande)
+        # ===== CARD: Gestión de Usuarios (nueva sección) =====
+        usuarios_card, usuarios_content = self.crear_bento_card(content_area, 
+                                                                "Gestión de Usuarios",
+                                                                "Configurar administrador y crear usuario estándar")
+        usuarios_card.grid(row=1, column=0, sticky='nsew', pady=(6, 6))
+        
+        # Grid para inputs de usuarios
+        usuarios_grid = tk.Frame(usuarios_content, bg=COLOR_CARD_BG)
+        usuarios_grid.pack(fill='both', expand=True, padx=0, pady=0)
+        usuarios_grid.columnconfigure(0, weight=0, minsize=130)
+        usuarios_grid.columnconfigure(1, weight=1)
+        
+        # Nuevo nombre administrador
+        tk.Label(usuarios_grid, text="Nuevo Nombre Admin:", bg=COLOR_CARD_BG, 
+                fg=COLOR_TEXT, font=('Segoe UI', 9)).grid(row=0, column=0, sticky='w', padx=12, pady=(8, 4))
+        self.admin_user_var = tk.StringVar(value="Administrador")
+        admin_input = tk.Entry(usuarios_grid, textvariable=self.admin_user_var, 
+                              font=('Segoe UI', 9), width=15)
+        admin_input.grid(row=0, column=1, sticky='ew', padx=(0, 12), pady=(8, 4))
+        
+        # Contraseña administrador
+        tk.Label(usuarios_grid, text="Contraseña Admin:", bg=COLOR_CARD_BG, 
+                fg=COLOR_TEXT, font=('Segoe UI', 9)).grid(row=1, column=0, sticky='w', padx=12, pady=4)
+        self.admin_pass_var = tk.StringVar()
+        admin_pass = tk.Entry(usuarios_grid, textvariable=self.admin_pass_var, 
+                             font=('Segoe UI', 9), show='●', width=15)
+        admin_pass.grid(row=1, column=1, sticky='ew', padx=(0, 12), pady=4)
+        
+        # Usuario estándar
+        tk.Label(usuarios_grid, text="Usuario Estándar:", bg=COLOR_CARD_BG, 
+                fg=COLOR_TEXT, font=('Segoe UI', 9)).grid(row=2, column=0, sticky='w', padx=12, pady=4)
+        self.std_user_var = tk.StringVar(value="alumno")
+        std_input = tk.Entry(usuarios_grid, textvariable=self.std_user_var, 
+                            font=('Segoe UI', 9), width=15)
+        std_input.grid(row=2, column=1, sticky='ew', padx=(0, 12), pady=(4, 8))
+        
+        # Botón para aplicar configuración de usuarios
+        btn_usuarios_frame = tk.Frame(usuarios_content, bg=COLOR_CARD_BG)
+        btn_usuarios_frame.pack(fill='x', padx=12, pady=(4, 8))
+        btn_usuarios_frame.columnconfigure(0, weight=1)
+        
+        self.btn_usuarios = tk.Button(btn_usuarios_frame, text="Aplicar Configuración de Usuarios", 
+                                      command=self.aplicar_configuracion_usuarios,
+                                      font=('Segoe UI', 9, 'bold'), bg='#0078D4', fg='white',
+                                      relief='flat', cursor='hand2', bd=0, pady=8,
+                                      highlightthickness=1, highlightbackground=COLOR_CARD_BORDER)
+        self.btn_usuarios.grid(row=0, column=0, sticky='ew')
+        self.btn_usuarios.bind("<Enter>", lambda e: self.btn_usuarios.config(bg=COLOR_BLUE))
+        self.btn_usuarios.bind("<Leave>", lambda e: self.btn_usuarios.config(bg='#0078D4'))
+        
+        # CARD: Registro de Actividad (abajo, expandible)
         log_card, log_content = self.crear_bento_card(content_area, "Registro de Actividad", "")
-        log_card.grid(row=1, column=0, sticky='nsew', pady=(6, 0))
+        log_card.grid(row=2, column=0, sticky='nsew', pady=(6, 0))
         
         # Text widget para el log
         log_frame = tk.Frame(log_content, bg=COLOR_CARD_BG)
@@ -519,6 +573,134 @@ class InterfazConfiguradorPC:
         """Habilita el botón de aplicar"""
         self.progress.stop()
         self.btn_aplicar.config(state='normal')
+    
+    def aplicar_configuracion_usuarios(self):
+        """Aplica la configuración de usuarios en un hilo separado"""
+        # Obtener valores
+        admin_user_nuevo = self.admin_user_var.get().strip()
+        admin_pass = self.admin_pass_var.get()
+        std_user = self.std_user_var.get().strip()
+        
+        # Validaciones básicas
+        if not admin_user_nuevo:
+            messagebox.showwarning("Campo requerido", "Por favor ingrese el nuevo nombre del administrador")
+            return
+        
+        if not admin_pass:
+            messagebox.showwarning("Campo requerido", "Por favor ingrese la contraseña del administrador")
+            return
+        
+        if not std_user:
+            messagebox.showwarning("Campo requerido", "Por favor ingrese el nombre del usuario estándar")
+            return
+        
+        # Deshabilitar botón
+        self.btn_usuarios.config(state='disabled')
+        self.progress.start()
+        
+        # Limpiar log
+        self.log_text.config(state='normal')
+        self.log_text.delete(1.0, tk.END)
+        self.log_text.config(state='disabled')
+        
+        # Ejecutar en hilo separado
+        thread = threading.Thread(target=self.ejecutar_configuracion_usuarios, 
+                                 args=(admin_user_nuevo, admin_pass, std_user))
+        thread.daemon = True
+        thread.start()
+    
+    def ejecutar_configuracion_usuarios(self, admin_user_nuevo, admin_pass, std_user):
+        """Ejecuta la configuración de usuarios"""
+        try:
+            self.log_mensaje("\n=== Iniciando Gestión de Usuarios ===")
+            
+            # Crear gestor de usuarios
+            gestor = GestorUsuarios(callback=self.log_mensaje)
+            
+            # Verificar permisos de administrador
+            if not gestor.es_admin:
+                self.log_mensaje("❌ Se requieren permisos de administrador para cambiar configuración")
+                self.root.after(100, self.habilitar_btn_usuarios)
+                return
+            
+            self.log_mensaje("✓ Permisos de administrador verificados")
+            
+            # Detectar automáticamente el usuario administrador actual
+            self.log_mensaje("\n→ Detectando usuario administrador actual...")
+            admin_user_actual = gestor.obtener_usuario_admin()
+            
+            if admin_user_actual:
+                self.log_mensaje(f"✓ Usuario administrador detectado: '{admin_user_actual}'")
+            else:
+                # Si no se puede detectar, usar el nombre nuevo proporcionado
+                self.log_mensaje("⚠️  No se pudo detectar automáticamente, intentando con el nombre proporcionado...")
+                # Verificar si el nombre nuevo existe
+                if gestor.usuario_existe(admin_user_nuevo):
+                    admin_user_actual = admin_user_nuevo
+                    self.log_mensaje(f"✓ Usuario '{admin_user_nuevo}' encontrado")
+                else:
+                    self.log_mensaje(f"❌ No se encontró ningún usuario administrador en el sistema")
+                    self.log_mensaje(f"   Asegúrese de que existe un usuario administrador")
+                    self.root.after(100, self.habilitar_btn_usuarios)
+                    return
+            
+            exitos = []
+            
+            # Renombrar usuario administrador al nombre deseado (solo si es diferente)
+            if admin_user_actual != admin_user_nuevo:
+                self.log_mensaje(f"\n→ Renombrando administrador: '{admin_user_actual}' → '{admin_user_nuevo}'...")
+                exito_rename, msg_rename = gestor.renombrar_usuario(admin_user_actual, admin_user_nuevo)
+                self.log_mensaje(msg_rename)
+                exitos.append(exito_rename)
+                # Usar el nuevo nombre para los siguientes comandos
+                nombre_admin_final = admin_user_nuevo
+            else:
+                nombre_admin_final = admin_user_actual
+                self.log_mensaje(f"\n→ Administrador ya tiene el nombre deseado: '{nombre_admin_final}'")
+                exitos.append(True)
+            
+            # Cambiar contraseña del administrador
+            self.log_mensaje(f"\n→ Asignando contraseña al administrador: '{nombre_admin_final}'...")
+            exito_pass, msg_pass = gestor.cambiar_contraseña_usuario(nombre_admin_final, admin_pass)
+            self.log_mensaje(msg_pass)
+            exitos.append(exito_pass)
+            
+            # Crear usuario estándar sin contraseña
+            self.log_mensaje(f"\n→ Creando usuario estándar: '{std_user}' (sin contraseña)...")
+            exito_std, msg_std = gestor.crear_usuario(std_user, "", es_admin=False)
+            self.log_mensaje(msg_std)
+            exitos.append(exito_std)
+            
+            # Configurar UAC
+            self.log_mensaje("\n→ Configurando UAC...")
+            exito_uac, msg_uac = gestor.configurar_uac()
+            self.log_mensaje(msg_uac)
+            exitos.append(exito_uac)
+            
+            # Resumen
+            self.log_mensaje("\n=== Resumen de Operaciones ===")
+            
+            if admin_user_actual != admin_user_nuevo:
+                self.log_mensaje(f"{'✓' if exitos[0] else '✗'} Renombre de {admin_user_actual} a {admin_user_nuevo}")
+                self.log_mensaje(f"{'✓' if exitos[1] else '✗'} Contraseña de {nombre_admin_final} asignada")
+                self.log_mensaje(f"{'✓' if exitos[2] else '✗'} Usuario estándar {std_user} creado (sin contraseña)")
+                self.log_mensaje(f"{'✓' if exitos[3] else '✗'} UAC configurado")
+            else:
+                self.log_mensaje(f"{'✓' if exitos[1] else '✗'} Contraseña de {nombre_admin_final} asignada")
+                self.log_mensaje(f"{'✓' if exitos[2] else '✗'} Usuario estándar {std_user} creado (sin contraseña)")
+                self.log_mensaje(f"{'✓' if exitos[3] else '✗'} UAC configurado")
+            
+            self.root.after(100, self.habilitar_btn_usuarios)
+            
+        except Exception as e:
+            self.log_mensaje(f"\n❌ Error inesperado: {e}")
+            self.root.after(100, self.habilitar_btn_usuarios)
+    
+    def habilitar_btn_usuarios(self):
+        """Habilita el botón de usuarios"""
+        self.progress.stop()
+        self.btn_usuarios.config(state='normal')
+    
     
     def toggle_todas_opciones(self):
         """Marca o desmarca todas las opciones de configuración"""

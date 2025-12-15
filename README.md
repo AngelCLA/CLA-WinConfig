@@ -11,6 +11,8 @@ CLA WinConfig es una aplicación de escritorio que automatiza tareas repetitivas
 - 🚫 Bloquear opciones de personalización para usuarios
 - 🔄 Reiniciar el explorador de Windows
 - 🔑 Activar Windows y Office (opcional)
+- 👥 **[NUEVO]** Crear usuarios locales (admin y estándar)
+- 🔐 **[NUEVO]** Configurar UAC automáticamente
 
 Pensado para uso institucional, técnico y en centros de cómputo donde se necesita configurar múltiples equipos de manera estandarizada.
 
@@ -143,6 +145,14 @@ Ejecuta un script de activación externo (requiere permisos de administrador y c
 
 ### 6. Reiniciar Explorador
 Reinicia el proceso `explorer.exe` para aplicar los cambios visuales inmediatamente.
+
+### 7. 👥 Gestión de Usuarios (NUEVO)
+Crea y configura usuarios locales de Windows:
+- **Usuario Administrador**: Con permisos completos
+- **Usuarios Estándar**: Sin acceso a instalaciones de software
+- **Configuración UAC**: Fuerza solicitud de credenciales para instalaciones
+
+📖 **Documentación completa**: Ver [USUARIOS_MODULO.md](USUARIOS_MODULO.md)
 
 ## 👨‍💻 Autor
 
