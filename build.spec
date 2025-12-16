@@ -4,14 +4,19 @@ block_cipher = None
 
 a = Analysis(
     ['src\\start.py'],
-    pathex=[],
+    pathex=['src'],
     binaries=[],
     datas=[
         ('docs\\icons\\*.ico', 'docs\\icons'),
         ('docs\\icons\\*.png', 'docs\\icons'),
         ('assets', 'assets'),
+        ('src\\scripts', 'scripts'),
     ],
-    hiddenimports=[],
+    hiddenimports=[
+        'tkinter',
+        'tkinter.ttk',
+        'ctypes',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -31,7 +36,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='CLA WinConfig',
+    name='CLA-WinConfig',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

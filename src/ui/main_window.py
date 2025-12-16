@@ -67,6 +67,7 @@ class InterfazConfiguradorPC:
             self.es_admin = False
         
         self.crear_interfaz()
+
     
     def crear_bento_card(self, parent, title, subtitle="", bg_color=COLOR_CARD_BG, border_color=COLOR_CARD_BORDER, extra_widget=None):
         """Crea una tarjeta estilo Bento con bordes redondeados"""
@@ -184,9 +185,16 @@ class InterfazConfiguradorPC:
         top_cards_container.grid(row=0, column=0, sticky='nsew', pady=(0, 6))
         
         # CARD: Centro/Identificador
-        centro_card, centro_content = self.crear_bento_card(top_cards_container, "Centro", 
-                                                            "Identificador del Centro de Cómputo")
-        centro_card.pack(fill='both', expand=True, pady=(0, 12))
+        centro_card, centro_content = self.crear_bento_card(top_cards_container, "Centro")
+        # Descripción debajo del título
+        tk.Label(
+            centro_content,
+            text="Identificador del Centro de Cómputo",
+            bg=COLOR_CARD_BG,
+            fg=COLOR_TEXT,
+            font=('Segoe UI', 9)
+        ).pack(anchor='w')
+        centro_card.pack(fill='both', expand=True)
         
         # Dropdown del centro
         self.centro_var = tk.StringVar(value="CID-Centro de Cómputo")
@@ -196,8 +204,14 @@ class InterfazConfiguradorPC:
         centro_combo.pack(fill='x', pady=12)
         
         # CARD: Número de PC
-        pc_card, pc_content = self.crear_bento_card(top_cards_container, "Número de PC", 
-                                                    "Identificador del equipo")
+        pc_card, pc_content = self.crear_bento_card(top_cards_container, "Número de PC")
+        tk.Label(
+            pc_content,
+            text="Identificador del equipo de cómputo",
+            bg=COLOR_CARD_BG,
+            fg=COLOR_TEXT,
+            font=('Segoe UI', 9)
+        ).pack(anchor='w')
         pc_card.pack(fill='both', expand=True, pady=(0, 0))
         
         self.numero_pc_var = tk.StringVar(value="1")
@@ -270,12 +284,17 @@ class InterfazConfiguradorPC:
         content_area = tk.Frame(main_container, bg=self.COLOR_LIGHT)
         content_area.grid(row=0, column=1, sticky='nsew', padx=(6, 12), pady=12)
         
-        # Configurar grid para el área de contenido (3 filas: opciones, usuarios, log)
-        content_area.rowconfigure(0, weight=0, minsize=180)  # Opciones de Configuración
-        content_area.rowconfigure(1, weight=0, minsize=200)  # Gestión de Usuarios
-        content_area.rowconfigure(2, weight=1)               # Registro de Actividad (expandible)
-        content_area.columnconfigure(0, weight=1)
-        
+        # Configurar grid para el área de contenido
+        # 2 columnas arriba, log abajo ocupando ambas
+        content_area.columnconfigure(0, weight=1, uniform="cards")
+        content_area.columnconfigure(1, weight=1, uniform="cards")
+
+        # Fila superior: Opciones + Usuarios (prioridad alta)
+        content_area.rowconfigure(0, weight=2)
+
+        # Fila inferior: Registro de Actividad (más pequeña)
+        content_area.rowconfigure(1, weight=1)
+
         # Variables de configuración
         self.tema_oscuro_var = tk.BooleanVar(value=True)
         self.fondo_pantalla_var = tk.BooleanVar(value=True)
@@ -297,91 +316,160 @@ class InterfazConfiguradorPC:
                                                                  "Opciones de Configuración",
                                                                  "",
                                                                  extra_widget=crear_checkbox_todas)
-        opciones_card.grid(row=0, column=0, sticky='nsew', pady=(0, 6))
+        # Descripción debajo del título
+        tk.Label(
+            opciones_content,
+            text="Seleccione las opciones a aplicar",
+            bg=COLOR_CARD_BG,
+            fg=COLOR_TEXT,
+            font=('Segoe UI', 9)
+        ).pack(anchor='w')
+        opciones_card.grid(row=0, column=0, sticky='nsew', padx=(0, 6))
         
         # Grid de checkboxes
         opciones_grid = tk.Frame(opciones_content, bg=COLOR_CARD_BG)
         opciones_grid.pack(fill='both', expand=True, pady=12)
         opciones_grid.columnconfigure(0, weight=1)
-        opciones_grid.columnconfigure(1, weight=1)
         
-        # Organizar en 2 columnas
         ttk.Checkbutton(opciones_grid, text="Activador (Windows + Office)", 
-                       variable=self.activar_windows_var).grid(row=0, column=0, sticky='w', pady=6, padx=12)
+               variable=self.activar_windows_var)\
+            .grid(row=0, column=0, sticky='w', pady=6, padx=12)
+
         ttk.Checkbutton(opciones_grid, text="Activar tema oscuro", 
-                       variable=self.tema_oscuro_var).grid(row=1, column=0, sticky='w', pady=6, padx=12)
+                    variable=self.tema_oscuro_var)\
+            .grid(row=1, column=0, sticky='w', pady=6, padx=12)
+
         ttk.Checkbutton(opciones_grid, text="Establecer fondo de pantalla", 
-                       variable=self.fondo_pantalla_var).grid(row=2, column=0, sticky='w', pady=6, padx=12)
+                    variable=self.fondo_pantalla_var)\
+            .grid(row=2, column=0, sticky='w', pady=6, padx=12)
+
         ttk.Checkbutton(opciones_grid, text="Mostrar claves de producto", 
-                       variable=self.mostrar_keys_var).grid(row=3, column=0, sticky='w', pady=6, padx=12)
+                    variable=self.mostrar_keys_var)\
+            .grid(row=3, column=0, sticky='w', pady=6, padx=12)
+
         ttk.Checkbutton(opciones_grid, text="Bloquear personalización", 
-                       variable=self.bloquear_personalizacion_var).grid(row=0, column=1, sticky='w', pady=6, padx=12)
+                    variable=self.bloquear_personalizacion_var)\
+            .grid(row=4, column=0, sticky='w', pady=6, padx=12)
+
         ttk.Checkbutton(opciones_grid, text="Establecer fondo de bloqueo", 
-                       variable=self.fondo_bloqueo_var).grid(row=1, column=1, sticky='w', pady=6, padx=12)
+                    variable=self.fondo_bloqueo_var)\
+            .grid(row=5, column=0, sticky='w', pady=6, padx=12)
+
         ttk.Checkbutton(opciones_grid, text="Reiniciar explorador al finalizar", 
-                       variable=self.reiniciar_explorer_var).grid(row=2, column=1, sticky='w', pady=6, padx=12)
+                    variable=self.reiniciar_explorer_var)\
+            .grid(row=6, column=0, sticky='w', pady=6, padx=12)
+
         
         # ===== CARD: Gestión de Usuarios (nueva sección) =====
         usuarios_card, usuarios_content = self.crear_bento_card(content_area, 
-                                                                "Gestión de Usuarios",
-                                                                "Configurar administrador y crear usuario estándar")
-        usuarios_card.grid(row=1, column=0, sticky='nsew', pady=(6, 6))
+                                                                "Gestión de Usuarios",)
+        # Descripción debajo del título
+        tk.Label(
+            usuarios_content,
+            text="Configurar administrador y \ncrear usuario estándar",
+            bg=COLOR_CARD_BG,
+            fg=COLOR_TEXT,
+            font=('Segoe UI', 9)
+        ).pack(anchor='w')
+
+        usuarios_card.grid(row=0, column=1, sticky='nsew', padx=(6, 0))
         
         # Grid para inputs de usuarios
         usuarios_grid = tk.Frame(usuarios_content, bg=COLOR_CARD_BG)
-        usuarios_grid.pack(fill='both', expand=True, padx=0, pady=0)
-        usuarios_grid.columnconfigure(0, weight=0, minsize=130)
-        usuarios_grid.columnconfigure(1, weight=1)
+        usuarios_grid.pack(fill='both', expand=True, padx=12, pady=8)
+        usuarios_grid.columnconfigure(0, weight=1)
+
         
         # Nuevo nombre administrador
-        tk.Label(usuarios_grid, text="Nuevo Nombre Admin:", bg=COLOR_CARD_BG, 
-                fg=COLOR_TEXT, font=('Segoe UI', 9)).grid(row=0, column=0, sticky='w', padx=12, pady=(8, 4))
+        # Nombre administrador
+        tk.Label(
+            usuarios_grid,
+            text="Nombre de administrador:",
+            bg=COLOR_CARD_BG,
+            fg=COLOR_TEXT,
+            font=('Segoe UI', 9)
+        ).grid(row=0, column=0, sticky='w', pady=(0, 4))
+
         self.admin_user_var = tk.StringVar(value="Administrador")
-        admin_input = tk.Entry(usuarios_grid, textvariable=self.admin_user_var, 
-                              font=('Segoe UI', 9), width=15)
-        admin_input.grid(row=0, column=1, sticky='ew', padx=(0, 12), pady=(8, 4))
-        
+        admin_input = tk.Entry(
+            usuarios_grid,
+            textvariable=self.admin_user_var,
+            font=('Segoe UI', 9)
+        )
+        admin_input.grid(row=1, column=0, sticky='ew', pady=(0, 10))
+
         # Contraseña administrador
-        tk.Label(usuarios_grid, text="Contraseña Admin:", bg=COLOR_CARD_BG, 
-                fg=COLOR_TEXT, font=('Segoe UI', 9)).grid(row=1, column=0, sticky='w', padx=12, pady=4)
+        tk.Label(
+            usuarios_grid,
+            text="Contraseña Administrador:",
+            bg=COLOR_CARD_BG,
+            fg=COLOR_TEXT,
+            font=('Segoe UI', 9)
+        ).grid(row=2, column=0, sticky='w', pady=(0, 4))
+
         self.admin_pass_var = tk.StringVar()
-        admin_pass = tk.Entry(usuarios_grid, textvariable=self.admin_pass_var, 
-                             font=('Segoe UI', 9), show='●', width=15)
-        admin_pass.grid(row=1, column=1, sticky='ew', padx=(0, 12), pady=4)
-        
+        admin_pass = tk.Entry(
+            usuarios_grid,
+            textvariable=self.admin_pass_var,
+            font=('Segoe UI', 9),
+            show='●'
+        )
+        admin_pass.grid(row=3, column=0, sticky='ew', pady=(0, 10))
+
         # Usuario estándar
-        tk.Label(usuarios_grid, text="Usuario Estándar:", bg=COLOR_CARD_BG, 
-                fg=COLOR_TEXT, font=('Segoe UI', 9)).grid(row=2, column=0, sticky='w', padx=12, pady=4)
-        self.std_user_var = tk.StringVar(value="alumno")
-        std_input = tk.Entry(usuarios_grid, textvariable=self.std_user_var, 
-                            font=('Segoe UI', 9), width=15)
-        std_input.grid(row=2, column=1, sticky='ew', padx=(0, 12), pady=(4, 8))
-        
+        tk.Label(
+            usuarios_grid,
+            text="Usuario Estándar:",
+            bg=COLOR_CARD_BG,
+            fg=COLOR_TEXT,
+            font=('Segoe UI', 9)
+        ).grid(row=4, column=0, sticky='w', pady=(0, 4))
+
+        self.std_user_var = tk.StringVar(value="Usuario ")
+        std_input = tk.Entry(
+            usuarios_grid,
+            textvariable=self.std_user_var,
+            font=('Segoe UI', 9)
+        )
+        std_input.grid(row=5, column=0, sticky='ew', pady=(0, 12))
+
         # Botón para aplicar configuración de usuarios
         btn_usuarios_frame = tk.Frame(usuarios_content, bg=COLOR_CARD_BG)
-        btn_usuarios_frame.pack(fill='x', padx=12, pady=(4, 8))
+        btn_usuarios_frame.pack(fill='x', padx=12, pady=(4, 12))
         btn_usuarios_frame.columnconfigure(0, weight=1)
-        
-        self.btn_usuarios = tk.Button(btn_usuarios_frame, text="Aplicar Configuración de Usuarios", 
-                                      command=self.aplicar_configuracion_usuarios,
-                                      font=('Segoe UI', 9, 'bold'), bg='#0078D4', fg='white',
-                                      relief='flat', cursor='hand2', bd=0, pady=8,
-                                      highlightthickness=1, highlightbackground=COLOR_CARD_BORDER)
+
+        self.btn_usuarios = tk.Button(
+            btn_usuarios_frame,
+            text="Aplicar Configuración de Usuarios",
+            command=self.aplicar_configuracion_usuarios,
+            font=('Segoe UI', 9, 'bold'),
+            bg='#0078D4',
+            fg='white',
+            relief='flat',
+            cursor='hand2',
+            bd=0,
+            pady=8,
+            highlightthickness=1,
+            highlightbackground=COLOR_CARD_BORDER
+        )
         self.btn_usuarios.grid(row=0, column=0, sticky='ew')
-        self.btn_usuarios.bind("<Enter>", lambda e: self.btn_usuarios.config(bg=COLOR_BLUE))
-        self.btn_usuarios.bind("<Leave>", lambda e: self.btn_usuarios.config(bg='#0078D4'))
+
         
         # CARD: Registro de Actividad (abajo, expandible)
         log_card, log_content = self.crear_bento_card(content_area, "Registro de Actividad", "")
-        log_card.grid(row=2, column=0, sticky='nsew', pady=(6, 0))
+        log_card.grid(row=1, column=0, columnspan=2, sticky='nsew', pady=(6, 0))
+        log_card.grid_propagate(False)
+        log_card.configure(height=170)
         
         # Text widget para el log
         log_frame = tk.Frame(log_content, bg=COLOR_CARD_BG)
         log_frame.pack(fill='both', expand=True)
+        log_frame.pack_propagate(False)
+
         
         self.log_text = tk.Text(log_frame, state='disabled', 
-                               font=('Consolas', 9), bg='#F8F9FA', fg=COLOR_TEXT,
-                               relief='flat', padx=12, pady=10, wrap='word')
+                               font=('Consolas', 8), bg='#F8F9FA', fg=COLOR_TEXT,
+                               relief='flat', padx=12, pady=6, wrap='word')
         self.log_text.pack(side='left', fill='both', expand=True)
         
         scrollbar = ttk.Scrollbar(log_frame, orient='vertical', command=self.log_text.yview)
@@ -609,92 +697,52 @@ class InterfazConfiguradorPC:
         thread.daemon = True
         thread.start()
     
-    def ejecutar_configuracion_usuarios(self, admin_user_nuevo, admin_pass, std_user):
-        """Ejecuta la configuración de usuarios"""
+    def ejecutar_configuracion_usuarios(
+        self,
+        admin_user_nuevo,
+        admin_pass,
+        std_user
+    ):
         try:
             self.log_mensaje("\n=== Iniciando Gestión de Usuarios ===")
-            
-            # Crear gestor de usuarios
+
             gestor = GestorUsuarios(callback=self.log_mensaje)
-            
-            # Verificar permisos de administrador
+
             if not gestor.es_admin:
-                self.log_mensaje("❌ Se requieren permisos de administrador para cambiar configuración")
+                self.log_mensaje("❌ Se requieren permisos de administrador")
                 self.root.after(100, self.habilitar_btn_usuarios)
                 return
-            
+
             self.log_mensaje("✓ Permisos de administrador verificados")
-            
-            # Detectar automáticamente el usuario administrador actual
-            self.log_mensaje("\n→ Detectando usuario administrador actual...")
-            admin_user_actual = gestor.obtener_usuario_admin()
-            
-            if admin_user_actual:
-                self.log_mensaje(f"✓ Usuario administrador detectado: '{admin_user_actual}'")
+
+            # Validación UI - usar admin_user_nuevo como nombre visible
+            nombre_visible_admin = admin_user_nuevo.strip()
+            if not nombre_visible_admin:
+                self.log_mensaje("❌ El nombre visible del administrador no puede estar vacío")
+                self.root.after(100, self.habilitar_btn_usuarios)
+                return
+
+            # Ejecutar flujo principal
+            ok, msg = gestor.configurar_centro_computo(
+                nombre_visible_admin=nombre_visible_admin,
+                password_admin=admin_pass,
+                usuario_alumno=std_user
+            )
+
+
+            self.log_mensaje(msg)
+
+            if ok:
+                self.log_mensaje("\n✔ Configuración de usuarios aplicada correctamente")
             else:
-                # Si no se puede detectar, usar el nombre nuevo proporcionado
-                self.log_mensaje("⚠️  No se pudo detectar automáticamente, intentando con el nombre proporcionado...")
-                # Verificar si el nombre nuevo existe
-                if gestor.usuario_existe(admin_user_nuevo):
-                    admin_user_actual = admin_user_nuevo
-                    self.log_mensaje(f"✓ Usuario '{admin_user_nuevo}' encontrado")
-                else:
-                    self.log_mensaje(f"❌ No se encontró ningún usuario administrador en el sistema")
-                    self.log_mensaje(f"   Asegúrese de que existe un usuario administrador")
-                    self.root.after(100, self.habilitar_btn_usuarios)
-                    return
-            
-            exitos = []
-            
-            # Renombrar usuario administrador al nombre deseado (solo si es diferente)
-            if admin_user_actual != admin_user_nuevo:
-                self.log_mensaje(f"\n→ Renombrando administrador: '{admin_user_actual}' → '{admin_user_nuevo}'...")
-                exito_rename, msg_rename = gestor.renombrar_usuario(admin_user_actual, admin_user_nuevo)
-                self.log_mensaje(msg_rename)
-                exitos.append(exito_rename)
-                # Usar el nuevo nombre para los siguientes comandos
-                nombre_admin_final = admin_user_nuevo
-            else:
-                nombre_admin_final = admin_user_actual
-                self.log_mensaje(f"\n→ Administrador ya tiene el nombre deseado: '{nombre_admin_final}'")
-                exitos.append(True)
-            
-            # Cambiar contraseña del administrador
-            self.log_mensaje(f"\n→ Asignando contraseña al administrador: '{nombre_admin_final}'...")
-            exito_pass, msg_pass = gestor.cambiar_contraseña_usuario(nombre_admin_final, admin_pass)
-            self.log_mensaje(msg_pass)
-            exitos.append(exito_pass)
-            
-            # Crear usuario estándar sin contraseña
-            self.log_mensaje(f"\n→ Creando usuario estándar: '{std_user}' (sin contraseña)...")
-            exito_std, msg_std = gestor.crear_usuario(std_user, "", es_admin=False)
-            self.log_mensaje(msg_std)
-            exitos.append(exito_std)
-            
-            # Configurar UAC
-            self.log_mensaje("\n→ Configurando UAC...")
-            exito_uac, msg_uac = gestor.configurar_uac()
-            self.log_mensaje(msg_uac)
-            exitos.append(exito_uac)
-            
-            # Resumen
-            self.log_mensaje("\n=== Resumen de Operaciones ===")
-            
-            if admin_user_actual != admin_user_nuevo:
-                self.log_mensaje(f"{'✓' if exitos[0] else '✗'} Renombre de {admin_user_actual} a {admin_user_nuevo}")
-                self.log_mensaje(f"{'✓' if exitos[1] else '✗'} Contraseña de {nombre_admin_final} asignada")
-                self.log_mensaje(f"{'✓' if exitos[2] else '✗'} Usuario estándar {std_user} creado (sin contraseña)")
-                self.log_mensaje(f"{'✓' if exitos[3] else '✗'} UAC configurado")
-            else:
-                self.log_mensaje(f"{'✓' if exitos[1] else '✗'} Contraseña de {nombre_admin_final} asignada")
-                self.log_mensaje(f"{'✓' if exitos[2] else '✗'} Usuario estándar {std_user} creado (sin contraseña)")
-                self.log_mensaje(f"{'✓' if exitos[3] else '✗'} UAC configurado")
-            
+                self.log_mensaje("\n⚠ La configuración terminó con errores")
+
             self.root.after(100, self.habilitar_btn_usuarios)
-            
+
         except Exception as e:
             self.log_mensaje(f"\n❌ Error inesperado: {e}")
             self.root.after(100, self.habilitar_btn_usuarios)
+
     
     def habilitar_btn_usuarios(self):
         """Habilita el botón de usuarios"""
