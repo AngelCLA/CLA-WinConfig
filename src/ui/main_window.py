@@ -390,7 +390,7 @@ class InterfazConfiguradorPC:
             font=('Segoe UI', 9)
         ).grid(row=0, column=0, sticky='w', pady=(0, 4))
 
-        self.admin_user_var = tk.StringVar(value="Administrador")
+        self.admin_user_var = tk.StringVar(value="Admin-")
         admin_input = tk.Entry(
             usuarios_grid,
             textvariable=self.admin_user_var,
@@ -407,7 +407,7 @@ class InterfazConfiguradorPC:
             font=('Segoe UI', 9)
         ).grid(row=2, column=0, sticky='w', pady=(0, 4))
 
-        self.admin_pass_var = tk.StringVar()
+        self.admin_pass_var = tk.StringVar(value="Servicios.Informaticos_UPMYS!")
         admin_pass = tk.Entry(
             usuarios_grid,
             textvariable=self.admin_pass_var,
