@@ -156,10 +156,12 @@ class InterfazConfiguradorPC:
         
         # Estado de admin en la derecha
         if self.es_admin:
-            admin_label = tk.Label(header_bar, text="● Administrador", 
-                                  fg='#4CAF50', bg=COLOR_BOLD_BLUE, 
-                                  font=('Segoe UI', 10, 'bold'))
-            admin_label.pack(side='right', padx=20)
+            admin_frame = tk.Frame(header_bar, bg=COLOR_BOLD_BLUE)
+            admin_frame.pack(side='right', padx=20)
+            # Círculo verde
+            tk.Label(admin_frame, text="●", fg="#4CAF50", bg=COLOR_BOLD_BLUE, font=("Segoe UI", 10, "bold")).pack(side="left")
+            # Texto claro
+            tk.Label(admin_frame, text="Administrador", fg=COLOR_LIGHT, bg=COLOR_BOLD_BLUE, font=("Segoe UI", 10, "bold")).pack(side="left", padx=(4,0))
         
         # ===== MAIN CONTAINER =====
         main_container = tk.Frame(self.root, bg=self.COLOR_LIGHT)
@@ -198,7 +200,7 @@ class InterfazConfiguradorPC:
         
         # Dropdown del centro
         self.centro_var = tk.StringVar(value="CID-Centro de Cómputo")
-        centro_combo = ttk.Combobox(centro_content, textvariable=self.centro_var, 
+        centro_combo = ttk.Combobox(centro_content, textvariable=self.centro_var, cursor="hand2", 
                                    state='readonly', font=('Segoe UI', 9))
         centro_combo['values'] = tuple(self.CENTROS_CARPETAS.keys())
         centro_combo.pack(fill='x', pady=12)
@@ -217,13 +219,71 @@ class InterfazConfiguradorPC:
         self.numero_pc_var = tk.StringVar(value="1")
         pc_input_frame = tk.Frame(pc_content, bg=COLOR_CARD_BG)
         pc_input_frame.pack(fill='x', pady=12)
-        
+
         tk.Label(pc_input_frame, text="PC #", bg=COLOR_CARD_BG, fg=COLOR_TEXT, 
-                font=('Segoe UI', 10)).pack(side='left', padx=(0, 8))
-        numero_spin = ttk.Spinbox(pc_input_frame, from_=1, to=100, 
-                                 textvariable=self.numero_pc_var, width=8, 
-                                 font=('Segoe UI', 11, 'bold'))
-        numero_spin.pack(side='left', fill='x', expand=True)
+            font=('Segoe UI', 10)).pack(side='left', padx=(0, 8))
+
+        def incrementar_pc():
+            try:
+                val = int(self.numero_pc_var.get())
+                if val < 100:
+                    self.numero_pc_var.set(str(val + 1))
+            except ValueError:
+                self.numero_pc_var.set("1")
+
+        def decrementar_pc():
+            try:
+                val = int(self.numero_pc_var.get())
+                if val > 1:
+                    self.numero_pc_var.set(str(val - 1))
+            except ValueError:
+                self.numero_pc_var.set("1")
+
+        btn_menos = tk.Button(
+            pc_input_frame,
+            text="-",
+            width=3,
+            font=('Segoe UI', 12, 'bold'),
+            command=decrementar_pc,
+            bg="#e3e7ef",  # color suave, puedes cambiarlo
+            fg=COLOR_TEXT,
+            relief='flat',
+            activebackground="#d0d4db",
+            activeforeground=COLOR_TEXT,
+            borderwidth=0,
+            cursor='hand2',
+            highlightthickness=0
+        )
+        btn_menos.pack(side='left', padx=(0, 4))
+
+        numero_entry = tk.Entry(
+            pc_input_frame,
+            textvariable=self.numero_pc_var,
+            width=5,
+            justify='center',
+            font=('Segoe UI', 11, 'bold'),
+            relief='flat',
+            highlightthickness=0,
+            bd=0
+        )
+        numero_entry.pack(side='left', fill='x')
+
+        btn_mas = tk.Button(
+            pc_input_frame,
+            text="+",
+            width=3,
+            font=('Segoe UI', 12, 'bold'),
+            command=incrementar_pc,
+            bg="#e3e7ef",  # color suave, puedes cambiarlo
+            fg=COLOR_TEXT,
+            relief='flat',
+            activebackground="#d0d4db",
+            activeforeground=COLOR_TEXT,
+            borderwidth=0,
+            cursor='hand2',
+            highlightthickness=0
+        )
+        btn_mas.pack(side='left', padx=(4, 0))
         
         # Contenedor para Botones + Progressbar (mismo alto que Registro de Actividad)
         bottom_cards_container = tk.Frame(sidebar, bg=self.COLOR_LIGHT)
@@ -307,7 +367,7 @@ class InterfazConfiguradorPC:
         
         # Función para crear el checkbox "Todas"
         def crear_checkbox_todas(parent):
-            chk = ttk.Checkbutton(parent, text="Todas", variable=self.todas_var, 
+            chk = ttk.Checkbutton(parent, text="Todas", variable=self.todas_var, cursor="hand2", 
                                  command=self.toggle_todas_opciones)
             return chk
         
@@ -332,32 +392,32 @@ class InterfazConfiguradorPC:
         opciones_grid.columnconfigure(0, weight=1)
         
         ttk.Checkbutton(opciones_grid, text="Activador (Windows + Office)", 
-               variable=self.activar_windows_var)\
-            .grid(row=0, column=0, sticky='w', pady=6, padx=12)
+               variable=self.activar_windows_var, cursor="hand2")\
+            .grid(row=0, column=0, sticky='w', pady=6, padx=12, )
 
         ttk.Checkbutton(opciones_grid, text="Activar tema oscuro", 
-                    variable=self.tema_oscuro_var)\
+                    variable=self.tema_oscuro_var, cursor="hand2")\
             .grid(row=1, column=0, sticky='w', pady=6, padx=12)
 
         ttk.Checkbutton(opciones_grid, text="Establecer fondo de pantalla", 
-                    variable=self.fondo_pantalla_var)\
+                    variable=self.fondo_pantalla_var, cursor="hand2")\
             .grid(row=2, column=0, sticky='w', pady=6, padx=12)
 
         ttk.Checkbutton(opciones_grid, text="Mostrar claves de producto", 
-                    variable=self.mostrar_keys_var)\
+                    variable=self.mostrar_keys_var, cursor="hand2")\
             .grid(row=3, column=0, sticky='w', pady=6, padx=12)
 
         ttk.Checkbutton(opciones_grid, text="Bloquear personalización", 
-                    variable=self.bloquear_personalizacion_var)\
+                    variable=self.bloquear_personalizacion_var, cursor="hand2")\
             .grid(row=4, column=0, sticky='w', pady=6, padx=12)
 
         ttk.Checkbutton(opciones_grid, text="Establecer fondo de bloqueo", 
-                    variable=self.fondo_bloqueo_var)\
+                    variable=self.fondo_bloqueo_var, cursor="hand2")\
             .grid(row=5, column=0, sticky='w', pady=6, padx=12)
 
         ttk.Checkbutton(opciones_grid, text="Reiniciar explorador al finalizar", 
-                    variable=self.reiniciar_explorer_var)\
-            .grid(row=6, column=0, sticky='w', pady=6, padx=12)
+                    variable=self.reiniciar_explorer_var, cursor="hand2")\
+            .grid(row=6, column=0, sticky='w', pady=6, padx=12, )
 
         
         # ===== CARD: Gestión de Usuarios (nueva sección) =====
@@ -390,13 +450,18 @@ class InterfazConfiguradorPC:
             font=('Segoe UI', 9)
         ).grid(row=0, column=0, sticky='w', pady=(0, 4))
 
-        self.admin_user_var = tk.StringVar(value="Admin-")
+        self.admin_user_var = tk.StringVar(value="Admin-SI")
         admin_input = tk.Entry(
             usuarios_grid,
             textvariable=self.admin_user_var,
-            font=('Segoe UI', 9)
+            font=('Segoe UI', 9),
+            relief='flat',
+            bd=0,
+            highlightthickness=0,
+            highlightbackground='#D1D5DB',  # gris claro
+            bg='white'
         )
-        admin_input.grid(row=1, column=0, sticky='ew', pady=(0, 10))
+        admin_input.grid(row=1, column=0, sticky='ew', pady=(0, 10), padx=12)
 
         # Contraseña administrador
         tk.Label(
@@ -412,9 +477,13 @@ class InterfazConfiguradorPC:
             usuarios_grid,
             textvariable=self.admin_pass_var,
             font=('Segoe UI', 9),
-            show='●'
+            show='●',
+            relief='flat',
+            bd=0,
+            highlightthickness=0,
+            bg='white'
         )
-        admin_pass.grid(row=3, column=0, sticky='ew', pady=(0, 10))
+        admin_pass.grid(row=3, column=0, sticky='ew', pady=(0, 10), padx=12)
 
         # Usuario estándar
         tk.Label(
@@ -425,13 +494,24 @@ class InterfazConfiguradorPC:
             font=('Segoe UI', 9)
         ).grid(row=4, column=0, sticky='w', pady=(0, 4))
 
-        self.std_user_var = tk.StringVar(value="Usuario ")
+        # Usuario estándar sincronizado con el número de PC
+        self.std_user_var = tk.StringVar(value=f"Usuario-{self.numero_pc_var.get()}")
         std_input = tk.Entry(
             usuarios_grid,
             textvariable=self.std_user_var,
-            font=('Segoe UI', 9)
+            font=('Segoe UI', 9),
+            relief='flat',
+            bd=1,
+            highlightthickness=1,
+            highlightbackground='#D1D5DB',  # gris claro
+            bg='white'
         )
         std_input.grid(row=5, column=0, sticky='ew', pady=(0, 12))
+
+        # Actualizar usuario estándar cuando cambie el número de PC
+        def actualizar_usuario_estandar(*args):
+            self.std_user_var.set(f"Usuario-{self.numero_pc_var.get()}")
+        self.numero_pc_var.trace_add('write', actualizar_usuario_estandar)
 
         # Botón para aplicar configuración de usuarios
         btn_usuarios_frame = tk.Frame(usuarios_content, bg=COLOR_CARD_BG)
