@@ -47,9 +47,13 @@ def configurar_estilos():
         background=COLOR_LIGHT_BLUE,
         troughcolor=COLOR_BOLD_BLUE,
         bordercolor=COLOR_BOLD_BLUE,
-        lightcolor=COLOR_LIGHT_BLUE,
-        darkcolor=COLOR_LIGHT_BLUE,
+        lightcolor=COLOR_BOLD_BLUE,
+        darkcolor=COLOR_BOLD_BLUE,
         thickness=4 
+    )
+    
+    style.map('Footer.Horizontal.TProgressbar',
+        background=[('active', COLOR_LIGHT_BLUE)]
     )
 
     # Estilos para tarjetas Bento
@@ -58,5 +62,44 @@ def configurar_estilos():
                    font=('Segoe UI', 11, 'bold'))
     style.configure('CardSubtitle.TLabel', background=COLOR_CARD_BG, foreground=COLOR_TEXT, 
                    font=('Segoe UI', 9))
+    
+    # Estilo para Combobox
+    style.configure(
+        'TCombobox',
+        fieldbackground=COLOR_CARD_BG,   # fondo del campo
+        background=COLOR_CARD_BG,
+        foreground=COLOR_TEXT,
+        bordercolor=COLOR_CARD_BORDER,
+        lightcolor=COLOR_CARD_BORDER,
+        darkcolor=COLOR_CARD_BORDER,
+        arrowsize=9
+    )
+
+    # Estados del Combobox (MUY IMPORTANTE)
+    style.map(
+        'TCombobox',
+        fieldbackground=[
+            ('readonly', COLOR_CARD_BG),
+            ('readonly', COLOR_CARD_BG),
+            ('focus', COLOR_CARD_BG)
+        ],
+        background=[
+            ('readonly', COLOR_CARD_BG),
+            ('active', COLOR_CARD_BG)
+        ],
+        foreground=[
+            ('readonly', COLOR_TEXT),
+            ('active', COLOR_TEXT),
+            ('focus', COLOR_TEXT)
+        ],
+        selectbackground=[
+            ('readonly', COLOR_CARD_BG)
+        ],
+        selectforeground=[
+            ('readonly', COLOR_TEXT)
+        ]
+    )
+
+
     
     return COLOR_LIGHT, COLOR_TEXT

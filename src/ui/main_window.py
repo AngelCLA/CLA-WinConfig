@@ -184,11 +184,11 @@ class InterfazConfiguradorPC:
         
         # Contenedor para Centro + Número de PC (mismo alto que Opciones de Configuración)
         top_cards_container = tk.Frame(sidebar, bg=self.COLOR_LIGHT)
-        top_cards_container.grid(row=0, column=0, sticky='nsew', pady=(0, 6))
+        top_cards_container.grid(row=0, column=0, sticky='nsew', pady=(0, 0))
 
         # CARD: Centro/Identificador (bento)
         centro_card, centro_content = self.crear_bento_card(top_cards_container, "Centro")
-        centro_card.pack(fill='both', expand=True, pady=(0, 6))
+        centro_card.pack(fill='both', expand=True, pady=(0, 12))
         tk.Label(
             centro_content,
             text="Identificador del Centro de Cómputo",
@@ -198,13 +198,13 @@ class InterfazConfiguradorPC:
         ).pack(anchor='w')
         self.centro_var = tk.StringVar(value="CID-Centro de Cómputo")
         centro_combo = ttk.Combobox(centro_content, textvariable=self.centro_var, cursor="hand2", 
-                                   state='readonly', font=('Segoe UI', 9))
+                                   state='readonly', font=('Segoe UI', 9), style='White.TCombobox')
         centro_combo['values'] = tuple(self.CENTROS_CARPETAS.keys())
         centro_combo.pack(fill='x', pady=12)
 
         # CARD: Número de PC (bento)
         pc_card, pc_content = self.crear_bento_card(top_cards_container, "Número de PC")
-        pc_card.pack(fill='both', expand=True)
+        pc_card.pack(fill='both', expand=True, pady=(0, 12))
         tk.Label(
             pc_content,
             text="Identificador del equipo de cómputo",
@@ -214,7 +214,7 @@ class InterfazConfiguradorPC:
         ).pack(anchor='w')
         self.numero_pc_var = tk.StringVar(value="1")
         pc_input_frame = tk.Frame(pc_content, bg=COLOR_CARD_BG)
-        pc_input_frame.pack(fill='x', pady=12)
+        pc_input_frame.pack(fill='x',  pady=(6, 0))
 
         tk.Label(pc_input_frame, text="PC #", bg=COLOR_CARD_BG, fg=COLOR_TEXT, 
             font=('Segoe UI', 10)).pack(side='left', padx=(0, 8))
@@ -520,8 +520,7 @@ class InterfazConfiguradorPC:
 
         # Botón para aplicar configuración de usuarios
         btn_usuarios_frame = tk.Frame(usuarios_content, bg=COLOR_CARD_BG)
-        btn_usuarios_frame.pack(fill='x', padx=12, pady=(4, 12))
-        btn_usuarios_frame.columnconfigure(0, weight=1)
+        btn_usuarios_frame.pack(fill='x', pady=(8, 0))
 
         self.btn_usuarios = tk.Button(
             btn_usuarios_frame,
@@ -537,7 +536,9 @@ class InterfazConfiguradorPC:
             highlightthickness=1,
             highlightbackground=COLOR_CARD_BORDER
         )
-        self.btn_usuarios.grid(row=0, column=0, sticky='ew')
+        self.btn_usuarios.pack(fill='x', expand=True)
+        self.btn_usuarios.bind("<Enter>", lambda e: self.btn_usuarios.config(bg=COLOR_DARK_BLUE))
+        self.btn_usuarios.bind("<Leave>", lambda e: self.btn_usuarios.config(bg='#0078D4'))
         
         # ===== FOOTER SECTION (al pie de la ventana) =====
         footer_bar = tk.Frame(self.root, bg=COLOR_BOLD_BLUE, height=70)
