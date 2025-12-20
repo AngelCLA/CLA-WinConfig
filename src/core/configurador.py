@@ -260,8 +260,28 @@ class ConfiguradorPC:
         except Exception as e:
             return None
     
+    def cambiar_zona_horaria(self):
+        """Cambia la zona horaria a UTC-07:00 (Chihuahua, La Paz, Mazatlán)"""
+        if not self.es_admin:
+            self.log("⚠️  Zona horaria omitida (requiere permisos de administrador)")
+            return False
+        
+        try:
+            import subprocess
+            # Mountain Standard Time es UTC-07:00 (Chihuahua, La Paz, Mazatlán)
+            comando = 'powershell -Command "Set-TimeZone -Id \'Mountain Standard Time\'"'
+            resultado = os.system(comando)
+            if resultado == 0:
+                self.log("✓ Zona horaria configurada (UTC-07:00)")
+                return True
+            else:
+                self.log("✗ Error al cambiar zona horaria")
+                return False
+        except Exception as e:
+            self.log(f"✗ Error al cambiar zona horaria: {e}")
+            return False
+    
     def activar_windows(self):
-        """Activa Windows y Office ejecutando el script de activación"""
         if not self.es_admin:
             self.log("⚠️  Activación omitida (requiere permisos de administrador)")
             return False
@@ -289,6 +309,9 @@ class ConfiguradorPC:
         if not self.es_admin:
             self.log("⚠️  NOTA: Ejecutando sin permisos de administrador")
             self.log("   Algunas funciones estarán limitadas\n")
+        
+        # Cambiar zona horaria automáticamente (sin opción de selección)
+        self.cambiar_zona_horaria()
         
         exitosos = 0
         total = 0
