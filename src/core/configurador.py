@@ -3,6 +3,7 @@ import os
 import sys
 import winreg
 import ctypes
+import shutil
 from pathlib import Path
 
 # Detectar si está empaquetado en .exe
@@ -24,10 +25,27 @@ class ConfiguradorPC:
         self.es_admin = self.verificar_admin()
         self.callback = callback
         
+        # Carpeta para almacenar fondos de pantalla
+        self.ruta_pictures = Path.home() / "Fondos"
+        self.ruta_pictures.mkdir(parents=True, exist_ok=True)
+        
     def log(self, mensaje):
         """Envía mensaje al callback si existe"""
         if self.callback:
             self.callback(mensaje)
+    
+    def copiar_imagen_a_pictures(self, ruta_origen, nombre_destino):
+        """Copia una imagen a la carpeta Fondos"""
+        try:
+            if not ruta_origen.exists():
+                return None
+            
+            ruta_destino = self.ruta_pictures / nombre_destino
+            shutil.copy2(str(ruta_origen), str(ruta_destino))
+            return ruta_destino
+        except Exception as e:
+            self.log(f"✗ Error al copiar imagen a Fondos: {e}")
+            return None
         
     def verificar_admin(self):
         """Verifica si el script se está ejecutando con permisos de administrador"""
@@ -73,10 +91,16 @@ class ConfiguradorPC:
                 self.log(f"✗ No se encontró PC-{self.numero_pc}.jpg o PC-{self.numero_pc}.png")
                 return False
             
-            ruta_absoluta = str(archivo_fondo.absolute())
+            # Copiar imagen a Fondos
+            ruta_destino = self.copiar_imagen_a_pictures(archivo_fondo, f"Wallpaper-PC-{self.numero_pc}{archivo_fondo.suffix}")
+            if not ruta_destino:
+                self.log(f"✗ No se pudo copiar el fondo de pantalla a Fondos")
+                return False
+            
+            ruta_absoluta = str(ruta_destino.absolute())
             SPI_SETDESKWALLPAPER = 0x0014
             ctypes.windll.user32.SystemParametersInfoW(SPI_SETDESKWALLPAPER, 0, ruta_absoluta, 3)
-            self.log(f"✓ Fondo de pantalla establecido: {archivo_fondo.name}")
+            self.log(f"✓ Fondo de pantalla establecido: {ruta_destino.name}")
             return True
         except Exception as e:
             self.log(f"✗ Error al establecer fondo de pantalla: {e}")
@@ -100,6 +124,12 @@ class ConfiguradorPC:
                 self.log("✗ No se encontró PC-Bloqueo.jpg o PC-Bloqueo.png")
                 return False
             
+            # Copiar imagen a Fondos
+            ruta_destino = self.copiar_imagen_a_pictures(archivo_bloqueo, f"LockScreen-PC-{self.numero_pc}{archivo_bloqueo.suffix}")
+            if not ruta_destino:
+                self.log(f"✗ No se pudo copiar el fondo de bloqueo a Fondos")
+                return False
+            
             try:
                 key = winreg.CreateKeyEx(winreg.HKEY_LOCAL_MACHINE,
                                         r"SOFTWARE\Policies\Microsoft\Windows\Personalization",
@@ -109,7 +139,7 @@ class ConfiguradorPC:
                                    r"SOFTWARE\Policies\Microsoft\Windows\Personalization",
                                    0, winreg.KEY_SET_VALUE)
             
-            ruta_absoluta = str(archivo_bloqueo.absolute())
+            ruta_absoluta = str(ruta_destino.absolute())
             winreg.SetValueEx(key, "LockScreenImage", 0, winreg.REG_SZ, ruta_absoluta)
             winreg.CloseKey(key)
             self.log("✓ Fondo de bloqueo establecido")
