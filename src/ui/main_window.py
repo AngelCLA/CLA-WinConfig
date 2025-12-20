@@ -178,17 +178,17 @@ class InterfazConfiguradorPC:
         sidebar = tk.Frame(main_container, bg=self.COLOR_LIGHT)
         sidebar.grid(row=0, column=0, sticky='nsew', padx=(12, 6), pady=12)
         
-        # Configurar grid de la sidebar (2 filas iguales)
+        # Configurar grid de la sidebar (2 filas)
         sidebar.rowconfigure(0, weight=1, uniform='row')
         sidebar.rowconfigure(1, weight=1, uniform='row')
         
         # Contenedor para Centro + Número de PC (mismo alto que Opciones de Configuración)
         top_cards_container = tk.Frame(sidebar, bg=self.COLOR_LIGHT)
         top_cards_container.grid(row=0, column=0, sticky='nsew', pady=(0, 6))
-        
-        # CARD: Centro/Identificador
+
+        # CARD: Centro/Identificador (bento)
         centro_card, centro_content = self.crear_bento_card(top_cards_container, "Centro")
-        # Descripción debajo del título
+        centro_card.pack(fill='both', expand=True, pady=(0, 6))
         tk.Label(
             centro_content,
             text="Identificador del Centro de Cómputo",
@@ -196,17 +196,15 @@ class InterfazConfiguradorPC:
             fg=COLOR_TEXT,
             font=('Segoe UI', 9)
         ).pack(anchor='w')
-        centro_card.pack(fill='both', expand=True)
-        
-        # Dropdown del centro
         self.centro_var = tk.StringVar(value="CID-Centro de Cómputo")
         centro_combo = ttk.Combobox(centro_content, textvariable=self.centro_var, cursor="hand2", 
                                    state='readonly', font=('Segoe UI', 9))
         centro_combo['values'] = tuple(self.CENTROS_CARPETAS.keys())
         centro_combo.pack(fill='x', pady=12)
-        
-        # CARD: Número de PC
+
+        # CARD: Número de PC (bento)
         pc_card, pc_content = self.crear_bento_card(top_cards_container, "Número de PC")
+        pc_card.pack(fill='both', expand=True)
         tk.Label(
             pc_content,
             text="Identificador del equipo de cómputo",
@@ -214,8 +212,6 @@ class InterfazConfiguradorPC:
             fg=COLOR_TEXT,
             font=('Segoe UI', 9)
         ).pack(anchor='w')
-        pc_card.pack(fill='both', expand=True, pady=(0, 0))
-        
         self.numero_pc_var = tk.StringVar(value="1")
         pc_input_frame = tk.Frame(pc_content, bg=COLOR_CARD_BG)
         pc_input_frame.pack(fill='x', pady=12)
@@ -285,80 +281,46 @@ class InterfazConfiguradorPC:
         )
         btn_mas.pack(side='left', padx=(4, 0))
         
-        # Contenedor para Botones + Progressbar (mismo alto que Registro de Actividad)
-        bottom_cards_container = tk.Frame(sidebar, bg=self.COLOR_LIGHT)
-        bottom_cards_container.grid(row=1, column=0, sticky='nsew', pady=(6, 0))
+        # CARD: Registro de Actividad (sidebar fila 2)
+        log_card, log_content = self.crear_bento_card(sidebar, "Registro de Actividad", "")
+        log_card.grid(row=1, column=0, sticky='nsew', pady=(0, 0))
         
-        # CARD: Botón Aplicar Configuración (sin fondo blanco)
-        self.btn_aplicar = tk.Button(bottom_cards_container, text="Aplicar\nConfiguración", 
-                                     command=self.aplicar_configuracion,
-                                     font=('Segoe UI', 11, 'bold'), bg=COLOR_ACCENT, fg='white',
-                                     relief='flat', cursor='hand2', bd=0, pady=20,
-                                     highlightthickness=1, highlightbackground=COLOR_CARD_BORDER)
-        self.btn_aplicar.pack(fill='x', pady=(0, 12))
-        self.btn_aplicar.bind("<Enter>", lambda e: self.btn_aplicar.config(bg=COLOR_BLUE))
-        self.btn_aplicar.bind("<Leave>", lambda e: self.btn_aplicar.config(bg=COLOR_ACCENT))
+        # Text widget para el log
+        log_frame = tk.Frame(log_content, bg=COLOR_CARD_BG)
+        log_frame.pack(fill='both', expand=True)
+        log_frame.pack_propagate(False)
+
         
-        # CARD: Botón Abrir Carpeta Assets (sin fondo blanco)
-        btn_carpeta = tk.Button(bottom_cards_container, text="Abrir\nCarpeta Assets", 
-                               command=self.abrir_carpeta_fondos,
-                               font=('Segoe UI', 10, 'bold'), bg=COLOR_BOLD_BLUE, fg='white',
-                               relief='flat', cursor='hand2', bd=0, pady=20,
-                               highlightthickness=1, highlightbackground=COLOR_CARD_BORDER)
-        btn_carpeta.pack(fill='x', pady=(0, 12))
-        btn_carpeta.bind("<Enter>", lambda e: btn_carpeta.config(bg=COLOR_DARK_BLUE))
-        btn_carpeta.bind("<Leave>", lambda e: btn_carpeta.config(bg=COLOR_BOLD_BLUE))
+        self.log_text = tk.Text(log_frame, state='disabled', 
+                               font=('Consolas', 8), bg='#F8F9FA', fg=COLOR_TEXT,
+                               relief='flat', padx=12, pady=6, wrap='word')
+        self.log_text.pack(side='left', fill='both', expand=True)
         
-        # Barra de progreso (sin fondo blanco)
-        self.progress = ttk.Progressbar(bottom_cards_container, mode='indeterminate')
-        self.progress.pack(fill='x', pady=(0, 12))
+        scrollbar = ttk.Scrollbar(log_frame, orient='vertical', command=self.log_text.yview)
+        scrollbar.pack(side='right', fill='y')
+        self.log_text['yscrollcommand'] = scrollbar.set
         
-        # Footer card
-        footer_card, footer_content = self.crear_bento_card(bottom_cards_container, "", "")
-        footer_card.pack(fill='x', pady=(0, 0))
-        
-        # Primera línea
-        line1 = tk.Frame(footer_content, bg=COLOR_CARD_BG)
-        line1.pack(pady=2)
-        
-        tk.Label(line1, text="Desarrollado por ", bg=COLOR_CARD_BG, 
-                fg=COLOR_TEXT, font=('Segoe UI', 8)).pack(side='left')
-        
-        github_link = tk.Label(line1, text="CLAAngel", bg=COLOR_CARD_BG, 
-                              fg=COLOR_BLUE, font=('Segoe UI', 8, 'underline'), 
-                              cursor="hand2")
-        github_link.pack(side='left')
-        github_link.bind("<Button-1>", lambda e: self.abrir_github())
-        
-        # Segunda línea
-        tk.Label(footer_content, text="Departamento de Servicios Informáticos", 
-                bg=COLOR_CARD_BG, fg=COLOR_TEXT, 
-                font=('Segoe UI', 8)).pack(pady=2)
-        
-        # Tercera línea
-        tk.Label(footer_content, text="Universidad Politécnica del Mar y la Sierra", 
-                bg=COLOR_CARD_BG, fg=COLOR_TEXT, 
-                font=('Segoe UI', 8)).pack(pady=2)
+        # Mensaje inicial
+        self.log_mensaje("✓ Sistema listo. Seleccione las opciones y presione 'Aplicar Configuración'")
+        self.log_mensaje("ℹ️ Las carpetas de assets se organizan por centro de cómputo")
         
         # ===== RIGHT CONTENT AREA (Columna 1) =====
         content_area = tk.Frame(main_container, bg=self.COLOR_LIGHT)
         content_area.grid(row=0, column=1, sticky='nsew', padx=(6, 12), pady=12)
         
         # Configurar grid para el área de contenido
-        # 2 columnas arriba, log abajo ocupando ambas
+        # 2 columnas ocupando todo el espacio
         content_area.columnconfigure(0, weight=1, uniform="cards")
         content_area.columnconfigure(1, weight=1, uniform="cards")
 
-        # Fila superior: Opciones + Usuarios (prioridad alta)
-        content_area.rowconfigure(0, weight=2)
-
-        # Fila inferior: Registro de Actividad (más pequeña)
-        content_area.rowconfigure(1, weight=1)
+        # Fila única: Opciones + Usuarios ocupan todo
+        content_area.rowconfigure(0, weight=1)
 
         # Variables de configuración
         self.tema_oscuro_var = tk.BooleanVar(value=True)
         self.fondo_pantalla_var = tk.BooleanVar(value=True)
         self.fondo_bloqueo_var = tk.BooleanVar(value=True)
+        self.optimizar_arranque_var = tk.BooleanVar(value=True)
         self.bloquear_personalizacion_var = tk.BooleanVar(value=True)
         self.reiniciar_explorer_var = tk.BooleanVar(value=True)
         self.activar_windows_var = tk.BooleanVar(value=True)
@@ -386,11 +348,11 @@ class InterfazConfiguradorPC:
         ).pack(anchor='w')
         opciones_card.grid(row=0, column=0, sticky='nsew', padx=(0, 6))
         
-        # Grid de checkboxes
+        # Grid de checkboxes y botones
         opciones_grid = tk.Frame(opciones_content, bg=COLOR_CARD_BG)
         opciones_grid.pack(fill='both', expand=True, pady=12)
         opciones_grid.columnconfigure(0, weight=1)
-        
+
         ttk.Checkbutton(opciones_grid, text="Activador (Windows + Office)", 
                variable=self.activar_windows_var, cursor="hand2")\
             .grid(row=0, column=0, sticky='w', pady=6, padx=12, )
@@ -414,10 +376,53 @@ class InterfazConfiguradorPC:
         ttk.Checkbutton(opciones_grid, text="Establecer fondo de bloqueo", 
                     variable=self.fondo_bloqueo_var, cursor="hand2")\
             .grid(row=5, column=0, sticky='w', pady=6, padx=12)
-
+        
+        ttk.Checkbutton(opciones_grid, text="Optimizar arranque (recomendado)", 
+                    variable=self.optimizar_arranque_var, cursor="hand2")\
+            .grid(row=6, column=0, sticky='w', pady=6, padx=12)
+        
         ttk.Checkbutton(opciones_grid, text="Reiniciar explorador al finalizar", 
                     variable=self.reiniciar_explorer_var, cursor="hand2")\
-            .grid(row=6, column=0, sticky='w', pady=6, padx=12, )
+            .grid(row=7, column=0, sticky='w', pady=6, padx=12, )
+        # --- Botones dentro del panel de opciones ---
+        botones_frame = tk.Frame(opciones_content, bg=COLOR_CARD_BG)
+        botones_frame.pack(fill='x', pady=(8, 0))
+
+        btn_carpeta = tk.Button(
+            botones_frame,
+            text="Ver carpeta de assets",
+            command=self.abrir_carpeta_fondos,
+            font=('Segoe UI', 9, 'bold'),
+            bg='#134074',
+            fg='white',
+            relief='flat',
+            cursor='hand2',
+            bd=0,
+            pady=8,
+            highlightthickness=1,
+            highlightbackground=COLOR_CARD_BORDER
+        )
+        btn_carpeta.pack(fill='x', expand=True, pady=(0, 8))
+        btn_carpeta.bind("<Enter>", lambda e: btn_carpeta.config(bg=COLOR_BLUE))
+        btn_carpeta.bind("<Leave>", lambda e: btn_carpeta.config(bg='#134074'))
+
+        self.btn_aplicar = tk.Button(
+            botones_frame,
+            text="Aplicar configuración",
+            command=self.aplicar_configuracion,
+            font=('Segoe UI', 9, 'bold'),
+            bg='#0078D4',
+            fg='white',
+            relief='flat',
+            cursor='hand2',
+            bd=0,
+            pady=8,
+            highlightthickness=1,
+            highlightbackground=COLOR_CARD_BORDER
+        )
+        self.btn_aplicar.pack(fill='x', expand=True)
+        self.btn_aplicar.bind("<Enter>", lambda e: self.btn_aplicar.config(bg=COLOR_DARK_BLUE))
+        self.btn_aplicar.bind("<Leave>", lambda e: self.btn_aplicar.config(bg='#0078D4'))
 
         
         # ===== CARD: Gestión de Usuarios (nueva sección) =====
@@ -533,32 +538,42 @@ class InterfazConfiguradorPC:
             highlightbackground=COLOR_CARD_BORDER
         )
         self.btn_usuarios.grid(row=0, column=0, sticky='ew')
+        
+        # ===== FOOTER SECTION (al pie de la ventana) =====
+        footer_bar = tk.Frame(self.root, bg=COLOR_BOLD_BLUE, height=70)
+        footer_bar.pack(fill='x', side='bottom')
+        footer_bar.pack_propagate(False)
+        
+        # Barra de progreso integrada en el footer (como separador delgado)
+        self.progress = ttk.Progressbar(footer_bar, mode='indeterminate', style='Footer.Horizontal.TProgressbar')
+        self.progress.pack(fill='x', padx=0, pady=0)
+        
+        # Contenedor del footer con centrado
+        footer_content_bar = tk.Frame(footer_bar, bg=COLOR_BOLD_BLUE)
+        footer_content_bar.pack(fill='both', expand=True)
+        
+        # Primera línea: Desarrollado por CLAAngel (link) - Departamento...
+        line1_footer_frame = tk.Frame(footer_content_bar, bg=COLOR_BOLD_BLUE)
+        line1_footer_frame.pack(pady=(8, 2))
+        
+        tk.Label(line1_footer_frame, text="Desarrollado por ", bg=COLOR_BOLD_BLUE, fg='white', 
+                font=('Segoe UI', 9)).pack(side='left')
+        
+        github_link_footer = tk.Label(line1_footer_frame, text="CLAAngel", bg=COLOR_BOLD_BLUE, fg='#5590FF', 
+                                      font=('Segoe UI', 9, 'underline'), cursor="hand2")
+        github_link_footer.pack(side='left')
+        github_link_footer.bind("<Button-1>", lambda e: self.abrir_github())
+        
+        tk.Label(line1_footer_frame, text=" - Departamento de Servicios Informáticos", bg=COLOR_BOLD_BLUE, fg='white', 
+                font=('Segoe UI', 9)).pack(side='left')
+        
+        # Segunda línea: Universidad...
+        line2_footer = tk.Label(footer_content_bar,
+                               text="Universidad Politécnica del Mar y la Sierra © 2025.",
+                               bg=COLOR_BOLD_BLUE, fg='white',
+                               font=('Segoe UI', 8))
+        line2_footer.pack(pady=(2, 8))
 
-        
-        # CARD: Registro de Actividad (abajo, expandible)
-        log_card, log_content = self.crear_bento_card(content_area, "Registro de Actividad", "")
-        log_card.grid(row=1, column=0, columnspan=2, sticky='nsew', pady=(6, 0))
-        log_card.grid_propagate(False)
-        log_card.configure(height=170)
-        
-        # Text widget para el log
-        log_frame = tk.Frame(log_content, bg=COLOR_CARD_BG)
-        log_frame.pack(fill='both', expand=True)
-        log_frame.pack_propagate(False)
-
-        
-        self.log_text = tk.Text(log_frame, state='disabled', 
-                               font=('Consolas', 8), bg='#F8F9FA', fg=COLOR_TEXT,
-                               relief='flat', padx=12, pady=6, wrap='word')
-        self.log_text.pack(side='left', fill='both', expand=True)
-        
-        scrollbar = ttk.Scrollbar(log_frame, orient='vertical', command=self.log_text.yview)
-        scrollbar.pack(side='right', fill='y')
-        self.log_text['yscrollcommand'] = scrollbar.set
-        
-        # Mensaje inicial
-        self.log_mensaje("✓ Sistema listo. Seleccione las opciones y presione 'Aplicar Configuración'")
-        self.log_mensaje("ℹ️ Las carpetas de assets se organizan por centro de cómputo")
     
     def log_mensaje(self, mensaje):
         """Agrega un mensaje al log"""
@@ -621,7 +636,8 @@ class InterfazConfiguradorPC:
             self.tema_oscuro_var.get(),
             self.fondo_pantalla_var.get(),
             self.fondo_bloqueo_var.get(),
-            self.bloquear_personalizacion_var.get()
+            self.bloquear_personalizacion_var.get(),
+            self.optimizar_arranque_var.get()
         ]
         
         if not any(tareas_configuracion):
@@ -645,6 +661,7 @@ class InterfazConfiguradorPC:
             'fondo_pantalla': self.fondo_pantalla_var.get(),
             'fondo_bloqueo': self.fondo_bloqueo_var.get(),
             'bloquear_personalizacion': self.bloquear_personalizacion_var.get(),
+            'optimizar_arranque': self.optimizar_arranque_var.get(),
             'reiniciar_explorer': self.reiniciar_explorer_var.get(),
             'mostrar_keys': self.mostrar_keys_var.get()
         }
@@ -842,3 +859,4 @@ class InterfazConfiguradorPC:
         self.bloquear_personalizacion_var.set(estado)
         self.reiniciar_explorer_var.set(estado)
         self.mostrar_keys_var.set(estado)
+        self.optimizar_arranque_var.set(estado)

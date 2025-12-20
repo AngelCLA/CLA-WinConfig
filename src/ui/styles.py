@@ -41,8 +41,17 @@ def configurar_estilos():
              foreground=[('', 'white'), ('active', 'white')])
     
     # Estilo para progressbar
-    style.configure('TProgressbar', background=COLOR_LIGHT_BLUE, troughcolor=COLOR_CARD_BG, bordercolor=COLOR_CARD_BORDER, lightcolor=COLOR_LIGHT_BLUE, darkcolor=COLOR_LIGHT_BLUE)
-    
+    # Estilo personalizado para Progressbar del footer
+    style.configure(
+        'Footer.Horizontal.TProgressbar',
+        background=COLOR_LIGHT_BLUE,
+        troughcolor=COLOR_BOLD_BLUE,
+        bordercolor=COLOR_BOLD_BLUE,
+        lightcolor=COLOR_LIGHT_BLUE,
+        darkcolor=COLOR_LIGHT_BLUE,
+        thickness=4 
+    )
+
     # Estilos para tarjetas Bento
     style.configure('Card.TFrame', background=COLOR_CARD_BG, relief='flat')
     style.configure('CardTitle.TLabel', background=COLOR_CARD_BG, foreground=COLOR_BOLD_BLUE, 

@@ -265,7 +265,7 @@ class ConfiguradorPC:
         
         # Contar solo las tareas de configuración real (excluir mostrar_keys y reiniciar_explorer)
         tareas_configuracion = ['activar_windows', 'tema_oscuro', 'fondo_pantalla', 
-                                'fondo_bloqueo', 'bloquear_personalizacion']
+                                'fondo_bloqueo', 'bloquear_personalizacion', 'optimizar_arranque']
         total = sum(1 for key in tareas_configuracion if opciones.get(key, False))
         
         if opciones.get('activar_windows', False):
@@ -282,6 +282,10 @@ class ConfiguradorPC:
             
         if opciones.get('bloquear_personalizacion', False):
             if self.bloquear_personalizacion(): exitosos += 1
+
+        if opciones.get('optimizar_arranque', False):
+            if self.optimizar_arranque():
+                exitosos += 1
         
         self.log(f"\n{'='*50}")
         self.log(f"Completado: {exitosos}/{total} tareas exitosas")
@@ -306,3 +310,74 @@ class ConfiguradorPC:
                 self.log("   Office Key: No disponible o no activado")
         
         return exitosos, total
+    
+    def optimizar_arranque(self):
+        """Deshabilita programas comunes de inicio para mejorar el arranque"""
+        if not self.es_admin:
+            self.log("⚠️  Optimización de arranque omitida (requiere permisos de administrador)")
+            return False
+
+        self.log("⏳ Optimizando programas de arranque...")
+
+        claves_run = [
+            (winreg.HKEY_LOCAL_MACHINE, r"Software\Microsoft\Windows\CurrentVersion\Run"),
+            (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run")
+        ]
+
+        patrones_bloqueados = [
+            "OneDrive",
+            "Teams",
+            "Adobe",
+            "Google",
+            "Java",
+            "Spotify",
+            "Zoom",
+            "Updater"
+        ]
+
+        patrones_protegidos = [
+            "Windows Security",
+            "Defender",
+            "SecurityHealth",
+            "Intel",
+            "Realtek",
+            "Synaptics",
+            "Audio",
+            "Graphics"
+        ]
+
+
+        eliminados = 0
+
+        for hive, ruta in claves_run:
+            try:
+                key = winreg.OpenKey(hive, ruta, 0, winreg.KEY_ALL_ACCESS)
+                valores = []
+                i = 0
+                while True:
+                    try:
+                        valores.append(winreg.EnumValue(key, i)[0])
+                        i += 1
+                    except OSError:
+                        break
+
+                for nombre in valores:
+                    if (
+                        any(p.lower() in nombre.lower() for p in patrones_bloqueados)
+                        and not any(p.lower() in nombre.lower() for p in patrones_protegidos)
+                    ):
+                        winreg.DeleteValue(key, nombre)
+                        self.log(f"   ⛔ Deshabilitado inicio: {nombre}")
+                        eliminados += 1
+
+                winreg.CloseKey(key)
+            except FileNotFoundError:
+                continue
+            except Exception as e:
+                self.log(f"✗ Error optimizando arranque: {e}")
+
+        self.log(f"✓ Optimización completada ({eliminados} entradas deshabilitadas)")
+        return True
+    
+    
+
