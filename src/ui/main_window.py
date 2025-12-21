@@ -383,7 +383,7 @@ class InterfazConfiguradorPC:
         
         ttk.Checkbutton(opciones_grid, text="Reiniciar explorador al finalizar", 
                     variable=self.reiniciar_explorer_var, cursor="hand2")\
-            .grid(row=7, column=0, sticky='w', pady=6, padx=12, )
+            .grid(row=8, column=0, sticky='w', pady=6, padx=12, )
         # --- Botones dentro del panel de opciones ---
         botones_frame = tk.Frame(opciones_content, bg=COLOR_CARD_BG)
         botones_frame.pack(fill='x', pady=(8, 0))
@@ -638,7 +638,7 @@ class InterfazConfiguradorPC:
             self.fondo_pantalla_var.get(),
             self.fondo_bloqueo_var.get(),
             self.bloquear_personalizacion_var.get(),
-            self.optimizar_arranque_var.get()
+            self.optimizar_arranque_var.get(),
         ]
         
         if not any(tareas_configuracion):

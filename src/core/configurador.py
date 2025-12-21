@@ -337,13 +337,12 @@ class ConfiguradorPC:
             if self.bloquear_personalizacion(): exitosos += 1
 
         if opciones.get('optimizar_arranque', False):
-            if self.optimizar_arranque():
-                exitosos += 1
-        
+            if self.optimizar_arranque(): exitosos += 1
+
         self.log(f"\n{'='*50}")
         self.log(f"Completado: {exitosos}/{total} tareas exitosas")
         self.log(f"{'='*50}\n")
-        
+
         if opciones.get('reiniciar_explorer', False):
             self.reiniciar_explorer()
         
@@ -432,5 +431,4 @@ class ConfiguradorPC:
         self.log(f"✓ Optimización completada ({eliminados} entradas deshabilitadas)")
         return True
     
-    
-
+   
