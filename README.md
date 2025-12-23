@@ -84,6 +84,7 @@ CLA WinConfig/
 ├── src/                      # Código fuente
 │   ├── core/                 # Lógica de negocio
 │   │   ├── __init__.py
+│   │   └── usuarios.py       # Clase GestorUsuarios
 │   │   └── configurador.py   # Clase ConfiguradorPC
 │   ├── ui/                   # Interfaz gráfica
 │   │   ├── __init__.py
