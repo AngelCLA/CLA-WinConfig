@@ -86,15 +86,21 @@ class ConfiguradorPC:
     def limpiar_cache_fondos(self):
         """Limpia el caché de fondos de pantalla de Windows para el usuario"""
         try:
+            # Determinar el usuario correcto
+            if self.soy_usuario_objetivo:
+                usuario = self.usuario_actual
+            else:
+                usuario = self.usuario_objetivo
+            
             # Ruta del caché de imágenes transcodificadas
-            cache_path = Path(f"C:/Users/{self.usuario_objetivo}/AppData/Roaming/Microsoft/Windows/Themes/TranscodedWallpaper")
-            cached_files_path = Path(f"C:/Users/{self.usuario_objetivo}/AppData/Roaming/Microsoft/Windows/Themes/CachedFiles")
+            cache_path = Path(f"C:/Users/{usuario}/AppData/Roaming/Microsoft/Windows/Themes/TranscodedWallpaper")
+            cached_files_path = Path(f"C:/Users/{usuario}/AppData/Roaming/Microsoft/Windows/Themes/CachedFiles")
             
             # Eliminar archivo de caché principal
             if cache_path.exists():
                 try:
                     cache_path.unlink()
-                    self.log(f"✓ Caché de fondo eliminado: TranscodedWallpaper")
+                    self.log(f"✓ Caché eliminado: TranscodedWallpaper")
                 except Exception as e:
                     self.log(f"⚠️  No se pudo eliminar caché: {e}")
             
@@ -103,7 +109,7 @@ class ConfiguradorPC:
                 try:
                     import shutil
                     shutil.rmtree(cached_files_path)
-                    self.log(f"✓ Caché de fondos eliminado: CachedFiles")
+                    self.log(f"✓ Caché eliminado: CachedFiles")
                 except Exception as e:
                     self.log(f"⚠️  No se pudo eliminar CachedFiles: {e}")
             
@@ -291,6 +297,21 @@ logFile.Close
     def establecer_tema_oscuro(self):
         """Activa el tema oscuro de Windows"""
         try:
+            # ⭐ Si somos el usuario objetivo, usar HKEY_CURRENT_USER
+            if self.soy_usuario_objetivo:
+                key = winreg.CreateKeyEx(
+                    winreg.HKEY_CURRENT_USER,
+                    r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
+                    0,
+                    winreg.KEY_SET_VALUE
+                )
+                winreg.SetValueEx(key, "AppsUseLightTheme", 0, winreg.REG_DWORD, 0)
+                winreg.SetValueEx(key, "SystemUsesLightTheme", 0, winreg.REG_DWORD, 0)
+                winreg.CloseKey(key)
+                self.log("✓ Tema oscuro activado (usuario actual)")
+                return True
+            
+            # Si no somos el usuario objetivo, usar el método anterior con SID
             if not self.sid_objetivo:
                 self.log("✗ No se pudo obtener el SID del usuario objetivo")
                 return False
@@ -315,6 +336,7 @@ logFile.Close
         except Exception as e:
             self.log(f"✗ Error al activar tema oscuro: {e}")
             return False
+
     
     def establecer_fondo_pantalla(self):
         """Establece el fondo de pantalla según el número de PC"""
@@ -330,11 +352,82 @@ logFile.Close
                 self.log(f"✗ No se encontró PC-{self.numero_pc}.jpg o PC-{self.numero_pc}.png")
                 return False
             
-            # ⭐ Usar ruta directa desde assets (sin copiar)
+            # Usar ruta directa desde assets (sin copiar)
             ruta_absoluta = str(archivo_fondo.absolute())
             
             self.log(f"📁 Aplicando fondo desde: {archivo_fondo.name}")
             
+            # ⭐ Si somos el usuario objetivo, usar HKEY_CURRENT_USER y SystemParametersInfo
+            if self.soy_usuario_objetivo:
+                try:
+                    # Método 1: Usar SystemParametersInfo (más efectivo)
+                    import ctypes
+                    SPI_SETDESKWALLPAPER = 20
+                    SPIF_UPDATEINIFILE = 0x01
+                    SPIF_SENDCHANGE = 0x02
+                    
+                    # Aplicar el fondo de pantalla
+                    resultado = ctypes.windll.user32.SystemParametersInfoW(
+                        SPI_SETDESKWALLPAPER,
+                        0,
+                        ruta_absoluta,
+                        SPIF_UPDATEINIFILE | SPIF_SENDCHANGE
+                    )
+                    
+                    if resultado:
+                        self.log(f"✓ Fondo de pantalla aplicado (usuario actual)")
+                        self.log(f"   Ruta: {ruta_absoluta}")
+                        
+                        # También actualizar en registro para persistencia
+                        key = winreg.CreateKeyEx(
+                            winreg.HKEY_CURRENT_USER,
+                            r"Control Panel\Desktop",
+                            0, 
+                            winreg.KEY_SET_VALUE
+                        )
+                        winreg.SetValueEx(key, "Wallpaper", 0, winreg.REG_SZ, ruta_absoluta)
+                        winreg.SetValueEx(key, "WallpaperStyle", 0, winreg.REG_SZ, "10")
+                        winreg.SetValueEx(key, "TileWallpaper", 0, winreg.REG_SZ, "0")
+                        winreg.CloseKey(key)
+                        
+                        # Limpiar caché
+                        self.limpiar_cache_fondos()
+                        
+                        return True
+                    else:
+                        self.log(f"⚠️  SystemParametersInfo falló, intentando método alternativo...")
+                        
+                except Exception as e:
+                    self.log(f"⚠️  Error con SystemParametersInfo: {e}")
+                
+                # Método 2 (fallback): Solo registro + script VBS
+                try:
+                    key = winreg.CreateKeyEx(
+                        winreg.HKEY_CURRENT_USER,
+                        r"Control Panel\Desktop",
+                        0, 
+                        winreg.KEY_SET_VALUE
+                    )
+                    winreg.SetValueEx(key, "Wallpaper", 0, winreg.REG_SZ, ruta_absoluta)
+                    winreg.SetValueEx(key, "WallpaperStyle", 0, winreg.REG_SZ, "10")
+                    winreg.SetValueEx(key, "TileWallpaper", 0, winreg.REG_SZ, "0")
+                    winreg.CloseKey(key)
+                    
+                    self.limpiar_cache_fondos()
+                    
+                    # Refrescar escritorio con rundll32
+                    os.system("rundll32.exe user32.dll,UpdatePerUserSystemParameters ,1 ,True")
+                    
+                    self.log(f"✓ Fondo configurado en registro (usuario actual)")
+                    self.log(f"   Ruta: {ruta_absoluta}")
+                    self.log(f"   ℹ️  Si no se ve, cierre sesión y vuelva a entrar")
+                    
+                    return True
+                except Exception as e:
+                    self.log(f"✗ Error aplicando fondo: {e}")
+                    return False
+            
+            # Si no somos el usuario objetivo, usar el método con SID
             if not self.sid_objetivo:
                 self.log(f"✗ No se pudo obtener el SID del usuario '{self.usuario_objetivo}'")
                 return False
@@ -356,61 +449,107 @@ logFile.Close
                     winreg.KEY_SET_VALUE
                 )
                 winreg.SetValueEx(key, "Wallpaper", 0, winreg.REG_SZ, ruta_absoluta)
-                winreg.SetValueEx(key, "WallpaperStyle", 0, winreg.REG_SZ, "10")  # 10 = Fill
+                winreg.SetValueEx(key, "WallpaperStyle", 0, winreg.REG_SZ, "10")
                 winreg.SetValueEx(key, "TileWallpaper", 0, winreg.REG_SZ, "0")
                 winreg.CloseKey(key)
                 
-                self.log(f"✓ Fondo de pantalla configurado para '{self.usuario_objetivo}': {archivo_fondo.name}")
-                self.log(f"   Ruta completa: {ruta_absoluta}")
+                self.log(f"✓ Fondo configurado para '{self.usuario_objetivo}'")
+                self.log(f"   Ruta: {ruta_absoluta}")
                 
-                # Crear script de inicio para aplicar el fondo al iniciar sesión
-                self.crear_script_aplicar_fondo(ruta_absoluta)
+                # Crear script de inicio
+                if self.es_admin:
+                    self.crear_script_aplicar_fondo(ruta_absoluta)
                 
                 return True
             except Exception as e:
-                self.log(f"✗ Error al escribir en registro para '{self.usuario_objetivo}': {e}")
+                self.log(f"✗ Error al escribir en registro: {e}")
                 return False
                 
         except Exception as e:
             self.log(f"✗ Error al establecer fondo de pantalla: {e}")
             return False
+
     
-    def establecer_fondo_bloqueo(self):
-        """Establece el fondo de pantalla de bloqueo"""
-        if not self.es_admin:
-            self.log("⚠️  Fondo de bloqueo omitido (requiere permisos de administrador)")
-            return False
-            
+    def bloquear_personalizacion(self):
+        """Bloquea las opciones de personalización para el usuario"""
         try:
-            archivo_bloqueo = None
+            archivo_fondo = None
+            
             for ext in ['.jpg', '.png', '.jpeg']:
-                ruta = self.ruta_lockscreen / f"PC-Bloqueo{ext}"
+                ruta = self.ruta_wallpapers / f"PC-{self.numero_pc}{ext}"
                 if ruta.exists():
-                    archivo_bloqueo = ruta
+                    archivo_fondo = ruta
                     break
             
-            if not archivo_bloqueo:
-                self.log("✗ No se encontró PC-Bloqueo.jpg o PC-Bloqueo.png")
+            if not archivo_fondo:
+                self.log(f"✗ No se puede bloquear personalización sin archivo de fondo")
                 return False
             
-            # ⭐ Usar ruta directa desde assets (sin copiar)
-            ruta_absoluta = str(archivo_bloqueo.absolute())
+            ruta_absoluta = str(archivo_fondo.absolute())
             
-            try:
-                key = winreg.CreateKeyEx(winreg.HKEY_LOCAL_MACHINE,
-                                        r"SOFTWARE\Policies\Microsoft\Windows\Personalization",
-                                        0, winreg.KEY_SET_VALUE)
-            except:
-                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                                   r"SOFTWARE\Policies\Microsoft\Windows\Personalization",
-                                   0, winreg.KEY_SET_VALUE)
+            # ⭐ Si somos el usuario objetivo, usar HKEY_CURRENT_USER
+            if self.soy_usuario_objetivo:
+                # Crear clave de políticas del sistema
+                key = winreg.CreateKeyEx(
+                    winreg.HKEY_CURRENT_USER,
+                    r"Software\Microsoft\Windows\CurrentVersion\Policies\System",
+                    0, 
+                    winreg.KEY_SET_VALUE
+                )
+                winreg.SetValueEx(key, "Wallpaper", 0, winreg.REG_SZ, ruta_absoluta)
+                winreg.SetValueEx(key, "WallpaperStyle", 0, winreg.REG_SZ, "10")
+                winreg.CloseKey(key)
+                
+                # Crear clave de políticas del explorador
+                key2 = winreg.CreateKeyEx(
+                    winreg.HKEY_CURRENT_USER,
+                    r"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer",
+                    0, 
+                    winreg.KEY_SET_VALUE
+                )
+                winreg.SetValueEx(key2, "NoThemesTab", 0, winreg.REG_DWORD, 1)
+                winreg.SetValueEx(key2, "NoControlPanel", 0, winreg.REG_DWORD, 0)
+                winreg.CloseKey(key2)
+                
+                self.log("✓ Personalización bloqueada (usuario actual)")
+                return True
             
-            winreg.SetValueEx(key, "LockScreenImage", 0, winreg.REG_SZ, ruta_absoluta)
+            # Si no somos el usuario objetivo, usar el método con SID
+            if not self.sid_objetivo:
+                self.log("✗ No se pudo obtener el SID del usuario objetivo")
+                return False
+            
+            # Asegurar que el hive esté cargado
+            if not self.asegurar_hive_cargado():
+                self.log("✗ No se pudo cargar el registro del usuario")
+                return False
+                
+            # Crear clave de políticas del sistema
+            key = winreg.CreateKeyEx(
+                winreg.HKEY_USERS,
+                f"{self.sid_objetivo}\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+                0, 
+                winreg.KEY_SET_VALUE
+            )
+            winreg.SetValueEx(key, "Wallpaper", 0, winreg.REG_SZ, ruta_absoluta)
+            winreg.SetValueEx(key, "WallpaperStyle", 0, winreg.REG_SZ, "10")
             winreg.CloseKey(key)
-            self.log("✓ Fondo de bloqueo establecido")
+            
+            # Crear clave de políticas del explorador
+            key2 = winreg.CreateKeyEx(
+                winreg.HKEY_USERS,
+                f"{self.sid_objetivo}\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+                0, 
+                winreg.KEY_SET_VALUE
+            )
+            winreg.SetValueEx(key2, "NoThemesTab", 0, winreg.REG_DWORD, 1)
+            winreg.SetValueEx(key2, "NoControlPanel", 0, winreg.REG_DWORD, 0)
+            winreg.CloseKey(key2)
+            
+            self.log("✓ Personalización bloqueada para usuario objetivo")
             return True
         except Exception as e:
-            self.log(f"✗ Error al establecer fondo de bloqueo: {e}")
+            self.log(f"✗ Error al bloquear personalización: {e}")
             return False
     
     def bloquear_personalizacion(self):
@@ -643,7 +782,7 @@ logFile.Close
     def optimizar_arranque(self):
         """Deshabilita programas comunes de inicio para mejorar el arranque"""
         if not self.es_admin:
-            self.log("⚠️  Optimización de arranque omitida (requiere permisos de administrador)")
+            self.log("⚠️ Optimización de arranque omitida (requiere permisos de administrador)")
             return False
 
         self.log("⏳ Optimizando programas de arranque...")
@@ -653,32 +792,84 @@ logFile.Close
             (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run")
         ]
 
+        claves_startup_approved = [
+            (winreg.HKEY_LOCAL_MACHINE, r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"),
+            (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run")
+        ]
+
         patrones_bloqueados = [
-            "OneDrive",
-            "Teams",
-            "Adobe",
-            "Google",
-            "Java",
-            "Spotify",
-            "Zoom",
-            "Updater"
+            "onedrive",
+            "teams",
+            "msedge",
+            "edge",
+            "adobe",
+            "google",
+            "java",
+            "spotify",
+            "zoom",
+            "updater"
+            "CCXProcess",
+            "discord",
+            "steam",
+            "epicgameslauncher",
+            "battlenet",
+            "spotify",
+            "apple",
+            "itunes",
+            "quicktime",
+            "dropbox",
+            "skype",
+            "microsoft 365 Copilot",
+            "mobile device",
+            "jusched"
         ]
 
         patrones_protegidos = [
-            "Windows Security",
-            "Defender",
-            "SecurityHealth",
-            "Intel",
-            "Realtek",
-            "Synaptics",
-            "Audio",
-            "Graphics"
+            "defender",
+            "security",
+            "intel",
+            "realtek",
+            "synaptics",
+            "audio",
+            "graphics",
+            "nvidia",
+            "amd"
         ]
-
 
         eliminados = 0
 
+        # 🔹 LIMPIAR Run
         for hive, ruta in claves_run:
+            try:
+                key = winreg.OpenKey(hive, ruta, 0, winreg.KEY_ALL_ACCESS)
+                valores = []
+                i = 0
+                while True:
+                    try:
+                        valores.append(winreg.EnumValue(key, i))
+                        i += 1
+                    except OSError:
+                        break
+
+                for nombre, valor, _ in valores:
+                    texto = f"{nombre} {valor}".lower()
+
+                    if (
+                        any(p in texto for p in patrones_bloqueados)
+                        and not any(p in texto for p in patrones_protegidos)
+                    ):
+                        winreg.DeleteValue(key, nombre)
+                        self.log(f"   ⛔ Inicio deshabilitado: {nombre}")
+                        eliminados += 1
+
+                winreg.CloseKey(key)
+            except FileNotFoundError:
+                continue
+            except Exception as e:
+                self.log(f"✗ Error optimizando Run: {e}")
+
+        # 🔹 DESHABILITAR StartupApproved (Windows 10/11)
+        for hive, ruta in claves_startup_approved:
             try:
                 key = winreg.OpenKey(hive, ruta, 0, winreg.KEY_ALL_ACCESS)
                 valores = []
@@ -691,22 +882,32 @@ logFile.Close
                         break
 
                 for nombre in valores:
+                    nombre_l = nombre.lower()
+
                     if (
-                        any(p.lower() in nombre.lower() for p in patrones_bloqueados)
-                        and not any(p.lower() in nombre.lower() for p in patrones_protegidos)
+                        any(p in nombre_l for p in patrones_bloqueados)
+                        and not any(p in nombre_l for p in patrones_protegidos)
                     ):
-                        winreg.DeleteValue(key, nombre)
-                        self.log(f"   ⛔ Deshabilitado inicio: {nombre}")
+                        # 03 00 00 00 = deshabilitado
+                        winreg.SetValueEx(
+                            key,
+                            nombre,
+                            0,
+                            winreg.REG_BINARY,
+                            b"\x03\x00\x00\x00\x00\x00\x00\x00"
+                        )
+                        self.log(f"   🚫 Startup deshabilitado: {nombre}")
                         eliminados += 1
 
                 winreg.CloseKey(key)
             except FileNotFoundError:
                 continue
             except Exception as e:
-                self.log(f"✗ Error optimizando arranque: {e}")
+                self.log(f"✗ Error optimizando StartupApproved: {e}")
 
         self.log(f"✓ Optimización completada ({eliminados} entradas deshabilitadas)")
         return True
+
     
     def __init__(self, numero_pc, carpeta_centro='CID-Centro_Computo', usuario_objetivo=None, callback=None):
         self.numero_pc = numero_pc
@@ -728,11 +929,22 @@ logFile.Close
 
         # Usuario objetivo y su SID
         self.usuario_objetivo = usuario_objetivo or getpass.getuser()
-        self.log(f"🔍 Obteniendo SID para usuario: '{self.usuario_objetivo}'")
-        self.sid_objetivo = self.obtener_sid_usuario(self.usuario_objetivo)
         
-        if not self.sid_objetivo:
-            self.log(f"⚠️  ADVERTENCIA: No se pudo obtener el SID de '{self.usuario_objetivo}'")
+        # ⭐ NUEVO: Detectar si somos el usuario objetivo
+        self.usuario_actual = getpass.getuser()
+        self.soy_usuario_objetivo = (self.usuario_actual.lower() == self.usuario_objetivo.lower())
+        
+        if self.soy_usuario_objetivo:
+            self.log(f"✓ Ejecutando como usuario objetivo: '{self.usuario_objetivo}'")
+            self.log(f"   Se aplicarán cambios directamente (sin cargar hive)")
+            # Para el usuario actual, usar HKEY_CURRENT_USER directamente
+            self.sid_objetivo = None  # No necesitamos SID
+        else:
+            self.log(f"🔍 Obteniendo SID para usuario: '{self.usuario_objetivo}'")
+            self.sid_objetivo = self.obtener_sid_usuario(self.usuario_objetivo)
+            
+            if not self.sid_objetivo:
+                self.log(f"⚠️  ADVERTENCIA: No se pudo obtener el SID de '{self.usuario_objetivo}'")
 
     def cargar_registro_usuario(self, nombre_usuario):
         """Carga el hive de registro del usuario si no está cargado"""
