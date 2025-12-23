@@ -6,6 +6,7 @@ Diseñado para centros de cómputo (CLA-WinConfig)
 import ctypes
 import getpass
 import subprocess
+from pathlib import Path
 
 
 class GestorUsuarios:
@@ -198,7 +199,8 @@ class GestorUsuarios:
         self,
         nombre_visible_admin,
         password_admin,
-        usuario_alumno
+        usuario_alumno,
+        configurador_pc=None
     ):
         self.log("=== Iniciando Gestión de Usuarios ===")
 
@@ -209,7 +211,20 @@ class GestorUsuarios:
         usuario_actual = getpass.getuser()
         self.log(f"✓ Administrador actual detectado: '{usuario_actual}'")
 
-        # 1. Cambiar nombre visible del admin actual
+        # 1. Crear usuario estándar
+        self.log("\n--- Paso 1: Creando usuario estándar ---")
+        ok, msg = self.crear_usuario(
+            nombre_usuario=usuario_alumno,
+            contraseña="",
+            es_admin=False
+        )
+        self.log(msg)
+        
+        if not ok and "ya existe" not in msg.lower():
+            return False, msg
+
+        # 2. Cambiar nombre visible del admin actual
+        self.log("\n--- Paso 2: Configurando administrador ---")
         ok, msg = self.cambiar_nombre_visible(
             nombre_cuenta=usuario_actual,
             nombre_visible=nombre_visible_admin
@@ -218,9 +233,8 @@ class GestorUsuarios:
         if not ok:
             return False, msg
 
+        # 3. Cambiar contraseña del admin actual
         self.log("✓ Actualizando credenciales del administrador actual")
-
-        # 2. Cambiar contraseña del admin actual
         ok, msg = self.cambiar_password(
             nombre_cuenta=usuario_actual,
             nueva_password=password_admin
@@ -229,16 +243,9 @@ class GestorUsuarios:
         if not ok:
             return False, msg
 
-        # 3. Crear usuario estándar
-        ok, msg = self.crear_usuario(
-            nombre_usuario=usuario_alumno,
-            contraseña="",
-            es_admin=False
-        )
-        self.log(msg)
-
         # 4. Configurar UAC
+        self.log("\n--- Paso 3: Configurando UAC ---")
         ok, msg = self.configurar_uac()
         self.log(msg)
 
-        return True, "✔ Centro de cómputo configurado correctamente"
+        return True, "✔ Usuario estándar creado y administrador configurado"

@@ -802,7 +802,9 @@ class InterfazConfiguradorPC:
         std_user
     ):
         try:
-            self.log_mensaje("\n=== Iniciando Gestión de Usuarios ===")
+            self.log_mensaje("\n" + "="*50)
+            self.log_mensaje("GESTIÓN DE USUARIOS")
+            self.log_mensaje("="*50)
 
             gestor = GestorUsuarios(callback=self.log_mensaje)
 
@@ -813,32 +815,49 @@ class InterfazConfiguradorPC:
 
             self.log_mensaje("✓ Permisos de administrador verificados")
 
-            # Validación UI - usar admin_user_nuevo como nombre visible
             nombre_visible_admin = admin_user_nuevo.strip()
             if not nombre_visible_admin:
                 self.log_mensaje("❌ El nombre visible del administrador no puede estar vacío")
                 self.root.after(100, self.habilitar_btn_usuarios)
                 return
 
-            # Ejecutar flujo principal
+            numero_pc = int(self.numero_pc_var.get())
+            centro_seleccionado = self.centro_var.get()
+            carpeta_centro = self.CENTROS_CARPETAS.get(centro_seleccionado, 'CID-Centro_Computo')
+            
+            self.log_mensaje(f"\n📋 Configuración seleccionada:")
+            self.log_mensaje(f"   Centro: {centro_seleccionado}")
+            self.log_mensaje(f"   PC número: {numero_pc}")
+
+            # Ejecutar flujo de creación de usuarios
             ok, msg = gestor.configurar_centro_computo(
                 nombre_visible_admin=nombre_visible_admin,
                 password_admin=admin_pass,
-                usuario_alumno=std_user
+                usuario_alumno=std_user,
+                configurador_pc=None
             )
-
 
             self.log_mensaje(msg)
 
+            self.log_mensaje("\n" + "="*50)
             if ok:
-                self.log_mensaje("\n✔ Configuración de usuarios aplicada correctamente")
+                self.log_mensaje("✔ CONFIGURACIÓN COMPLETADA EXITOSAMENTE")
+                self.log_mensaje("="*50)
+                self.log_mensaje("\n📋 Resumen:")
+                self.log_mensaje(f"  • Administrador: {nombre_visible_admin}")
+                self.log_mensaje(f"  • Usuario estándar: {std_user}")
+                self.log_mensaje(f"  • Centro: {centro_seleccionado}")
+                self.log_mensaje(f"  • PC: {numero_pc}")
             else:
-                self.log_mensaje("\n⚠ La configuración terminó con errores")
+                self.log_mensaje("⚠ LA CONFIGURACIÓN TERMINÓ CON ERRORES")
+                self.log_mensaje("="*50)
 
             self.root.after(100, self.habilitar_btn_usuarios)
 
         except Exception as e:
             self.log_mensaje(f"\n❌ Error inesperado: {e}")
+            import traceback
+            self.log_mensaje(traceback.format_exc())
             self.root.after(100, self.habilitar_btn_usuarios)
 
     
