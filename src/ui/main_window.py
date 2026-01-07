@@ -196,7 +196,7 @@ class InterfazConfiguradorPC:
             fg=COLOR_TEXT,
             font=('Segoe UI', 9)
         ).pack(anchor='w')
-        self.centro_var = tk.StringVar(value="CID-Centro de Cómputo")
+        self.centro_var = tk.StringVar(value="-- Seleccionar Centro --")
         centro_combo = ttk.Combobox(centro_content, textvariable=self.centro_var, cursor="hand2", 
                                    state='readonly', font=('Segoe UI', 9), style='White.TCombobox')
         centro_combo['values'] = tuple(self.CENTROS_CARPETAS.keys())
@@ -327,6 +327,11 @@ class InterfazConfiguradorPC:
         self.mostrar_keys_var = tk.BooleanVar(value=True)
         self.todas_var = tk.BooleanVar(value=True)
         
+        # Variables de gestión de usuarios
+        self.renombrar_admin_var = tk.BooleanVar(value=True)
+        self.cambiar_pass_admin_var = tk.BooleanVar(value=True)
+        self.crear_std_var = tk.BooleanVar(value=True)
+        
         # Función para crear el checkbox "Todas"
         def crear_checkbox_todas(parent):
             chk = ttk.Checkbutton(parent, text="Todas", variable=self.todas_var, cursor="hand2", 
@@ -431,7 +436,7 @@ class InterfazConfiguradorPC:
         # Descripción debajo del título
         tk.Label(
             usuarios_content,
-            text="Configurar administrador y \ncrear usuario estándar",
+            text="Seleccione las tareas de usuarios a realizar",
             bg=COLOR_CARD_BG,
             fg=COLOR_TEXT,
             font=('Segoe UI', 9)
@@ -444,60 +449,45 @@ class InterfazConfiguradorPC:
         usuarios_grid.pack(fill='both', expand=True, padx=12, pady=8)
         usuarios_grid.columnconfigure(0, weight=1)
 
+        # --- OPCIÓN 1: Renombrar Admin ---
+        ttk.Checkbutton(usuarios_grid, text="Cambiar nombre de admin", 
+                       variable=self.renombrar_admin_var, cursor="hand2")\
+            .grid(row=0, column=0, sticky='w', pady=(5, 2))
         
-        # Nuevo nombre administrador
-        # Nombre administrador
-        tk.Label(
-            usuarios_grid,
-            text="Nombre de administrador:",
-            bg=COLOR_CARD_BG,
-            fg=COLOR_TEXT,
-            font=('Segoe UI', 9)
-        ).grid(row=0, column=0, sticky='w', pady=(0, 4))
-
         self.admin_user_var = tk.StringVar(value="Admin-SI")
         admin_input = tk.Entry(
             usuarios_grid,
             textvariable=self.admin_user_var,
             font=('Segoe UI', 9),
             relief='flat',
-            bd=0,
-            highlightthickness=0,
-            highlightbackground='#D1D5DB',  # gris claro
+            highlightthickness=1,
+            highlightbackground='#D1D5DB',
             bg='white'
         )
-        admin_input.grid(row=1, column=0, sticky='ew', pady=(0, 10), padx=12)
+        admin_input.grid(row=1, column=0, sticky='ew', pady=(0, 10), padx=(20, 0))
 
-        # Contraseña administrador
-        tk.Label(
-            usuarios_grid,
-            text="Contraseña Administrador:",
-            bg=COLOR_CARD_BG,
-            fg=COLOR_TEXT,
-            font=('Segoe UI', 9)
-        ).grid(row=2, column=0, sticky='w', pady=(0, 4))
+        # --- OPCIÓN 2: Cambiar Contraseña Admin ---
+        ttk.Checkbutton(usuarios_grid, text="Cambiar contraseña de admin", 
+                       variable=self.cambiar_pass_admin_var, cursor="hand2")\
+            .grid(row=2, column=0, sticky='w', pady=(5, 2))
 
         self.admin_pass_var = tk.StringVar(value="Servicios.Informaticos_UPMYS!")
-        admin_pass = tk.Entry(
+        admin_pass_entry = tk.Entry(
             usuarios_grid,
             textvariable=self.admin_pass_var,
             font=('Segoe UI', 9),
             show='●',
             relief='flat',
-            bd=0,
-            highlightthickness=0,
+            highlightthickness=1,
+            highlightbackground='#D1D5DB',
             bg='white'
         )
-        admin_pass.grid(row=3, column=0, sticky='ew', pady=(0, 10), padx=12)
+        admin_pass_entry.grid(row=3, column=0, sticky='ew', pady=(0, 10), padx=(20, 0))
 
-        # Usuario estándar
-        tk.Label(
-            usuarios_grid,
-            text="Usuario Estándar:",
-            bg=COLOR_CARD_BG,
-            fg=COLOR_TEXT,
-            font=('Segoe UI', 9)
-        ).grid(row=4, column=0, sticky='w', pady=(0, 4))
+        # --- OPCIÓN 3: Crear Usuario Estándar ---
+        ttk.Checkbutton(usuarios_grid, text="Crear usuario estándar", 
+                       variable=self.crear_std_var, cursor="hand2")\
+            .grid(row=4, column=0, sticky='w', pady=(5, 2))
 
         # Usuario estándar sincronizado con el número de PC
         self.std_user_var = tk.StringVar(value=f"Usuario-{self.numero_pc_var.get()}")
@@ -506,12 +496,11 @@ class InterfazConfiguradorPC:
             textvariable=self.std_user_var,
             font=('Segoe UI', 9),
             relief='flat',
-            bd=1,
             highlightthickness=1,
-            highlightbackground='#D1D5DB',  # gris claro
+            highlightbackground='#D1D5DB',
             bg='white'
         )
-        std_input.grid(row=5, column=0, sticky='ew', pady=(0, 12))
+        std_input.grid(row=5, column=0, sticky='ew', pady=(0, 12), padx=(20, 0))
 
         # Actualizar usuario estándar cuando cambie el número de PC
         def actualizar_usuario_estandar(*args):
@@ -587,7 +576,11 @@ class InterfazConfiguradorPC:
     def abrir_carpeta_fondos(self):
         """Abre la carpeta de assets del centro seleccionado o la crea si no existe"""
         centro_seleccionado = self.centro_var.get()
-        carpeta_centro = self.CENTROS_CARPETAS.get(centro_seleccionado, 'CID-Centro_Computo')
+        if centro_seleccionado not in self.CENTROS_CARPETAS:
+            messagebox.showwarning("Centro no seleccionado", "Por favor, seleccione un centro de cómputo primero.")
+            return
+
+        carpeta_centro = self.CENTROS_CARPETAS.get(centro_seleccionado)
         
         carpeta_assets = BASE_PATH.parent / "assets" / carpeta_centro
         carpeta_wallpapers = carpeta_assets / "wallpapers"
@@ -620,9 +613,14 @@ class InterfazConfiguradorPC:
             messagebox.showerror("Error", "Por favor ingrese un número de PC válido")
             return
         
-        # Obtener carpeta del centro seleccionado
+        # Validar centro seleccionado
         centro_seleccionado = self.centro_var.get()
-        carpeta_centro = self.CENTROS_CARPETAS.get(centro_seleccionado, 'CID-Centro_Computo')
+        if centro_seleccionado not in self.CENTROS_CARPETAS:
+            messagebox.showwarning("Centro no seleccionado", "Por favor seleccione un centro de cómputo para continuar.")
+            return
+
+        # Obtener carpeta del centro seleccionado
+        carpeta_centro = self.CENTROS_CARPETAS.get(centro_seleccionado)
         carpeta_centro_path = BASE_PATH.parent / "assets" / carpeta_centro
         
         # Verificar que existen las carpetas assets del centro
@@ -762,21 +760,31 @@ class InterfazConfiguradorPC:
     
     def aplicar_configuracion_usuarios(self):
         """Aplica la configuración de usuarios en un hilo separado"""
+        # Validar centro seleccionado (para evitar errores de contexto)
+        if self.centro_var.get() not in self.CENTROS_CARPETAS:
+            messagebox.showwarning("Centro no seleccionado", "Por favor seleccione un centro de cómputo antes de configurar usuarios.")
+            return
+
+        # Verificar que al menos una opción esté seleccionada
+        if not (self.renombrar_admin_var.get() or self.cambiar_pass_admin_var.get() or self.crear_std_var.get()):
+            messagebox.showwarning("Sin opciones", "Seleccione al menos una tarea de usuarios para realizar")
+            return
+
         # Obtener valores
         admin_user_nuevo = self.admin_user_var.get().strip()
         admin_pass = self.admin_pass_var.get()
         std_user = self.std_user_var.get().strip()
         
-        # Validaciones básicas
-        if not admin_user_nuevo:
+        # Validaciones condicionales
+        if self.renombrar_admin_var.get() and not admin_user_nuevo:
             messagebox.showwarning("Campo requerido", "Por favor ingrese el nuevo nombre del administrador")
             return
         
-        if not admin_pass:
+        if self.cambiar_pass_admin_var.get() and not admin_pass:
             messagebox.showwarning("Campo requerido", "Por favor ingrese la contraseña del administrador")
             return
         
-        if not std_user:
+        if self.crear_std_var.get() and not std_user:
             messagebox.showwarning("Campo requerido", "Por favor ingrese el nombre del usuario estándar")
             return
         
@@ -784,6 +792,16 @@ class InterfazConfiguradorPC:
         self.btn_usuarios.config(state='disabled')
         self.progress.start()
         
+        # Opciones
+        opciones_usuarios = {
+            'renombrar_admin': self.renombrar_admin_var.get(),
+            'cambiar_pass_admin': self.cambiar_pass_admin_var.get(),
+            'crear_std': self.crear_std_var.get(),
+            'admin_nombre': admin_user_nuevo,
+            'admin_pass': admin_pass,
+            'std_nombre': std_user
+        }
+
         # Limpiar log
         self.log_text.config(state='normal')
         self.log_text.delete(1.0, tk.END)
@@ -791,15 +809,13 @@ class InterfazConfiguradorPC:
         
         # Ejecutar en hilo separado
         thread = threading.Thread(target=self.ejecutar_configuracion_usuarios, 
-                                 args=(admin_user_nuevo, admin_pass, std_user))
+                                 args=(opciones_usuarios,))
         thread.daemon = True
         thread.start()
-    
+
     def ejecutar_configuracion_usuarios(
         self,
-        admin_user_nuevo,
-        admin_pass,
-        std_user
+        opciones
     ):
         try:
             self.log_mensaje("\n" + "="*50)
@@ -815,42 +831,50 @@ class InterfazConfiguradorPC:
 
             self.log_mensaje("✓ Permisos de administrador verificados")
 
-            nombre_visible_admin = admin_user_nuevo.strip()
-            if not nombre_visible_admin:
-                self.log_mensaje("❌ El nombre visible del administrador no puede estar vacío")
-                self.root.after(100, self.habilitar_btn_usuarios)
-                return
-
-            numero_pc = int(self.numero_pc_var.get())
             centro_seleccionado = self.centro_var.get()
-            carpeta_centro = self.CENTROS_CARPETAS.get(centro_seleccionado, 'CID-Centro_Computo')
+            self.log_mensaje(f"📍 Centro seleccionado: {centro_seleccionado}")
+
+            import getpass
+            usuario_actual = getpass.getuser()
             
-            self.log_mensaje(f"\n📋 Configuración seleccionada:")
-            self.log_mensaje(f"   Centro: {centro_seleccionado}")
-            self.log_mensaje(f"   PC número: {numero_pc}")
+            # --- TAREA 1: Renombrar Admin ---
+            if opciones['renombrar_admin']:
+                self.log_mensaje(f"\n--- Cambiando nombre visible de '{usuario_actual}' ---")
+                ok, msg = gestor.cambiar_nombre_visible(usuario_actual, opciones['admin_nombre'])
+                self.log_mensaje(msg)
+                if not ok:
+                    self.root.after(100, self.habilitar_btn_usuarios)
+                    return
 
-            # Ejecutar flujo de creación de usuarios
-            ok, msg = gestor.configurar_centro_computo(
-                nombre_visible_admin=nombre_visible_admin,
-                password_admin=admin_pass,
-                usuario_alumno=std_user,
-                configurador_pc=None
-            )
+            # --- TAREA 2: Cambiar Contraseña ---
+            if opciones['cambiar_pass_admin']:
+                self.log_mensaje(f"\n--- Cambiando contraseña de '{usuario_actual}' ---")
+                ok, msg = gestor.cambiar_password(usuario_actual, opciones['admin_pass'])
+                self.log_mensaje(msg)
+                if not ok:
+                    self.root.after(100, self.habilitar_btn_usuarios)
+                    return
 
-            self.log_mensaje(msg)
+            # --- TAREA 3: Crear Usuario Estándar ---
+            if opciones['crear_std']:
+                self.log_mensaje(f"\n--- Creando usuario estándar '{opciones['std_nombre']}' ---")
+                ok, msg = gestor.crear_usuario(opciones['std_nombre'], "", es_admin=False)
+                self.log_mensaje(msg)
+                if not ok and "ya existe" not in msg.lower():
+                    self.log_mensaje(f"❌ Error al crear usuario: {msg}")
+                    self.root.after(100, self.habilitar_btn_usuarios)
+                    return
+
+            # --- TAREA 4: Configurar UAC (Siempre se hace si se toca algo de esto, o opcional?) ---
+            # Por ahora lo mantenemos como parte de la configuración base si se creó un usuario estándar
+            if opciones['crear_std']:
+                self.log_mensaje("\n--- Configurando UAC ---")
+                ok, msg = gestor.configurar_uac()
+                self.log_mensaje(msg)
 
             self.log_mensaje("\n" + "="*50)
-            if ok:
-                self.log_mensaje("✔ CONFIGURACIÓN COMPLETADA EXITOSAMENTE")
-                self.log_mensaje("="*50)
-                self.log_mensaje("\n📋 Resumen:")
-                self.log_mensaje(f"  • Administrador: {nombre_visible_admin}")
-                self.log_mensaje(f"  • Usuario estándar: {std_user}")
-                self.log_mensaje(f"  • Centro: {centro_seleccionado}")
-                self.log_mensaje(f"  • PC: {numero_pc}")
-            else:
-                self.log_mensaje("⚠ LA CONFIGURACIÓN TERMINÓ CON ERRORES")
-                self.log_mensaje("="*50)
+            self.log_mensaje("✔ GESTIÓN DE USUARIOS FINALIZADA")
+            self.log_mensaje("="*50)
 
             self.root.after(100, self.habilitar_btn_usuarios)
 

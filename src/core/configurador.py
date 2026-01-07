@@ -469,8 +469,82 @@ logFile.Close
             self.log(f"✗ Error al establecer fondo de pantalla: {e}")
             return False
 
+    def establecer_fondo_bloqueo(self):
+        """Establece el fondo de pantalla de bloqueo según el número de PC"""
+        try:
+            archivo_fondo = None
+            for ext in ['.jpg', '.png', '.jpeg']:
+                ruta = self.ruta_lockscreen / f"PC-{self.numero_pc}{ext}"
+                if ruta.exists():
+                    archivo_fondo = ruta
+                    break
+            
+            if not archivo_fondo:
+                self.log(f"✗ No se encontró fondo de bloqueo para PC-{self.numero_pc}")
+                return False
+            
+            ruta_absoluta = str(archivo_fondo.absolute())
+            
+            self.log(f"📁 Aplicando fondo de bloqueo desde: {archivo_fondo.name}")
+            
+            # ⭐ Si somos el usuario objetivo, usar HKEY_CURRENT_USER
+            if self.soy_usuario_objetivo:
+                try:
+                    # Crear/abrir la clave del personalizador de bloqueo
+                    key = winreg.CreateKeyEx(
+                        winreg.HKEY_CURRENT_USER,
+                        r"Software\Microsoft\Windows\CurrentVersion\PersonalizationSettings",
+                        0, 
+                        winreg.KEY_SET_VALUE
+                    )
+                    winreg.SetValueEx(key, "LockScreenImagePath", 0, winreg.REG_SZ, ruta_absoluta)
+                    winreg.CloseKey(key)
+                    
+                    # También guardar en la carpeta de Windows para el fondo de bloqueo
+                    lockscreen_path = Path.home() / "AppData/Local/Microsoft/Windows/Themes"
+                    lockscreen_path.mkdir(parents=True, exist_ok=True)
+                    
+                    self.log(f"✓ Fondo de bloqueo aplicado (usuario actual)")
+                    self.log(f"   Ruta: {ruta_absoluta}")
+                    return True
+                    
+                except Exception as e:
+                    self.log(f"⚠️  Error al aplicar fondo de bloqueo: {e}")
+                    return False
+            
+            # Si no somos el usuario objetivo, usar el método con SID
+            if not self.sid_objetivo:
+                self.log(f"✗ No se pudo obtener el SID del usuario '{self.usuario_objetivo}'")
+                return False
+            
+            # Asegurar que el hive esté cargado
+            if not self.asegurar_hive_cargado():
+                self.log("✗ No se pudo cargar el registro del usuario")
+                return False
+            
+            try:
+                # Crear/abrir la clave del personalizador de bloqueo
+                key = winreg.CreateKeyEx(
+                    winreg.HKEY_USERS,
+                    f"{self.sid_objetivo}\\Software\\Microsoft\\Windows\\CurrentVersion\\PersonalizationSettings",
+                    0, 
+                    winreg.KEY_SET_VALUE
+                )
+                winreg.SetValueEx(key, "LockScreenImagePath", 0, winreg.REG_SZ, ruta_absoluta)
+                winreg.CloseKey(key)
+                
+                self.log(f"✓ Fondo de bloqueo configurado para '{self.usuario_objetivo}'")
+                self.log(f"   Ruta: {ruta_absoluta}")
+                return True
+                
+            except Exception as e:
+                self.log(f"✗ Error al escribir fondo de bloqueo: {e}")
+                return False
+                
+        except Exception as e:
+            self.log(f"✗ Error al establecer fondo de bloqueo: {e}")
+            return False
     
-    def bloquear_personalizacion(self):
         """Bloquea las opciones de personalización para el usuario"""
         try:
             archivo_fondo = None
