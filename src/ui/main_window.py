@@ -28,6 +28,7 @@ class InterfazConfiguradorPC:
     CENTROS_CARPETAS = {
         'CID-Centro de Cómputo': 'CID-Centro_Computo',
         'UD2-Laboratorio de Software': 'UD2-Laboratorio_Software',
+        'UD2-Laboratorio de Finanzas': 'UD2-Laboratorio_Finanzas',
         'UD2-Laboratorio de Redes': 'UD2-Laboratorio_Redes',
         'UD1-Centro de Cómputo': 'UD1-Centro_Computo',
         'UD1-Aula de Cómputo': 'UD1-Aula_Computo'
@@ -326,6 +327,7 @@ class InterfazConfiguradorPC:
         self.activar_windows_var = tk.BooleanVar(value=True)
         self.mostrar_keys_var = tk.BooleanVar(value=True)
         self.todas_var = tk.BooleanVar(value=True)
+        self.instalar_tareas_var = tk.BooleanVar(value=False)  # NUEVA VARIABLE
         
         # Variables de gestión de usuarios
         self.renombrar_admin_var = tk.BooleanVar(value=True)
@@ -360,7 +362,7 @@ class InterfazConfiguradorPC:
 
         ttk.Checkbutton(opciones_grid, text="Activador (Windows + Office)", 
                variable=self.activar_windows_var, cursor="hand2")\
-            .grid(row=0, column=0, sticky='w', pady=6, padx=12, )
+            .grid(row=0, column=0, sticky='w', pady=6, padx=12)
 
         ttk.Checkbutton(opciones_grid, text="Activar tema oscuro", 
                     variable=self.tema_oscuro_var, cursor="hand2")\
@@ -386,9 +388,15 @@ class InterfazConfiguradorPC:
                     variable=self.optimizar_arranque_var, cursor="hand2")\
             .grid(row=6, column=0, sticky='w', pady=6, padx=12)
         
+        # NUEVA OPCIÓN: Instalar tareas programadas
+        ttk.Checkbutton(opciones_grid, text="Instalar tareas programadas", 
+                    variable=self.instalar_tareas_var, cursor="hand2")\
+            .grid(row=7, column=0, sticky='w', pady=6, padx=12)
+        
         ttk.Checkbutton(opciones_grid, text="Reiniciar explorador al finalizar", 
                     variable=self.reiniciar_explorer_var, cursor="hand2")\
-            .grid(row=8, column=0, sticky='w', pady=6, padx=12, )
+            .grid(row=8, column=0, sticky='w', pady=6, padx=12)
+        
         # --- Botones dentro del panel de opciones ---
         botones_frame = tk.Frame(opciones_content, bg=COLOR_CARD_BG)
         botones_frame.pack(fill='x', pady=(8, 0))
@@ -585,6 +593,7 @@ class InterfazConfiguradorPC:
         carpeta_assets = BASE_PATH.parent / "assets" / carpeta_centro
         carpeta_wallpapers = carpeta_assets / "wallpapers"
         carpeta_lockscreen = carpeta_assets / "lockscreen"
+        carpeta_tareas = carpeta_assets / "tareasprogramadas"  # NUEVA CARPETA
         
         if not carpeta_assets.exists():
             carpeta_assets.mkdir(parents=True)
@@ -595,6 +604,9 @@ class InterfazConfiguradorPC:
         if not carpeta_lockscreen.exists():
             carpeta_lockscreen.mkdir()
             self.log_mensaje(f"✓ Carpeta '{carpeta_centro}/lockscreen' creada")
+        if not carpeta_tareas.exists():  # CREAR CARPETA DE TAREAS
+            carpeta_tareas.mkdir()
+            self.log_mensaje(f"✓ Carpeta '{carpeta_centro}/tareasprogramadas' creada")
         
         os.startfile(carpeta_assets)
     
@@ -637,6 +649,7 @@ class InterfazConfiguradorPC:
             self.fondo_bloqueo_var.get(),
             self.bloquear_personalizacion_var.get(),
             self.optimizar_arranque_var.get(),
+            self.instalar_tareas_var.get(),  # NUEVA TAREA
         ]
         
         if not any(tareas_configuracion):
@@ -662,7 +675,8 @@ class InterfazConfiguradorPC:
             'bloquear_personalizacion': self.bloquear_personalizacion_var.get(),
             'optimizar_arranque': self.optimizar_arranque_var.get(),
             'reiniciar_explorer': self.reiniciar_explorer_var.get(),
-            'mostrar_keys': self.mostrar_keys_var.get()
+            'mostrar_keys': self.mostrar_keys_var.get(),
+            'instalar_tareas': self.instalar_tareas_var.get()  # NUEVA OPCIÓN
         }
         
         # Ejecutar en hilo separado
@@ -813,10 +827,8 @@ class InterfazConfiguradorPC:
         thread.daemon = True
         thread.start()
 
-    def ejecutar_configuracion_usuarios(
-        self,
-        opciones
-    ):
+    def ejecutar_configuracion_usuarios(self, opciones):
+        """Ejecuta la configuración de usuarios"""
         try:
             self.log_mensaje("\n" + "="*50)
             self.log_mensaje("GESTIÓN DE USUARIOS")
@@ -904,3 +916,4 @@ class InterfazConfiguradorPC:
         self.reiniciar_explorer_var.set(estado)
         self.mostrar_keys_var.set(estado)
         self.optimizar_arranque_var.set(estado)
+        self.instalar_tareas_var.set(estado)  # NUEVA LÍNEA

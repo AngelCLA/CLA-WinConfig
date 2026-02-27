@@ -544,6 +544,8 @@ logFile.Close
         except Exception as e:
             self.log(f"✗ Error al establecer fondo de bloqueo: {e}")
             return False
+        
+        
     
         """Bloquea las opciones de personalización para el usuario"""
         try:
@@ -625,6 +627,49 @@ logFile.Close
         except Exception as e:
             self.log(f"✗ Error al bloquear personalización: {e}")
             return False
+    def instalar_tareas_programadas(self):
+            """Instala las tareas programadas desde archivos XML del centro"""
+            import subprocess
+            
+            try:
+                carpeta_tareas = BASE_PATH.parent / "assets" / self.carpeta_centro / "tareasprogramadas"
+                
+                if not carpeta_tareas.exists():
+                    return False, "⚠️ No existe la carpeta de tareas programadas"
+                
+                archivos_xml = list(carpeta_tareas.glob("*.xml"))
+                
+                if not archivos_xml:
+                    return False, "⚠️ No hay archivos XML de tareas en la carpeta"
+                
+                self.log(f"\n📋 Encontrados {len(archivos_xml)} archivos de tareas programadas")
+                
+                exitos = 0
+                errores = 0
+                
+                for xml_file in archivos_xml:
+                    nombre_tarea = xml_file.stem
+                    self.log(f"⏱️ Instalando tarea: {nombre_tarea}")
+                    
+                    # Comando para crear tarea programada
+                    cmd = f'schtasks /Create /TN "{nombre_tarea}" /XML "{xml_file}" /F'
+                    
+                    resultado = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+                    
+                    if resultado.returncode == 0:
+                        self.log(f"   ✓ Tarea '{nombre_tarea}' instalada correctamente")
+                        exitos += 1
+                    else:
+                        self.log(f"   ❌ Error instalando '{nombre_tarea}': {resultado.stderr.strip()}")
+                        errores += 1
+                
+                if errores == 0:
+                    return True, f"✓ {exitos} tareas programadas instaladas correctamente"
+                else:
+                    return True, f"⚠️ Tareas instaladas: {exitos}, Con errores: {errores}"
+                
+            except Exception as e:
+                return False, f"❌ Error al instalar tareas: {str(e)}"
     
     def bloquear_personalizacion(self):
         """Bloquea las opciones de personalización para el usuario"""
@@ -808,7 +853,8 @@ logFile.Close
         
         # Contar solo las tareas de configuración real (excluir mostrar_keys y reiniciar_explorer)
         tareas_configuracion = ['activar_windows', 'tema_oscuro', 'fondo_pantalla', 
-                                'fondo_bloqueo', 'bloquear_personalizacion', 'optimizar_arranque']
+                                'fondo_bloqueo', 'bloquear_personalizacion', 'optimizar_arranque',
+                                'instalar_tareas']
         total = sum(1 for key in tareas_configuracion if opciones.get(key, False))
         
         if opciones.get('activar_windows', False):
@@ -825,6 +871,15 @@ logFile.Close
             
         if opciones.get('bloquear_personalizacion', False):
             if self.bloquear_personalizacion(): exitosos += 1
+
+        if opciones.get('instalar_tareas'):
+            self.log("\n" + "="*50)
+            self.log("INSTALANDO TAREAS PROGRAMADAS")
+            self.log("="*50)
+            exito, msg = self.instalar_tareas_programadas()
+            self.log(msg)
+            if exito:
+                exitosos += 1
 
         if opciones.get('optimizar_arranque', False):
             if self.optimizar_arranque(): exitosos += 1
